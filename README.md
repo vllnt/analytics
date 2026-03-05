@@ -200,4 +200,4 @@ pnpm lint:fix      # Lint + autofix
 
 ## License
 
-Private — `@vllnt` internal package.
+[MIT](LICENSE)
