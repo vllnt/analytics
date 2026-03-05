@@ -201,7 +201,9 @@ export function enableAnalytics(config: AnalyticsConfig): void {
 }
 
 /**
- * Disable analytics after consent is revoked
+ * Disable analytics after consent is revoked.
+ * NOTE: Does not clear in-memory userId/traits (GDPR Art. 17 limitation).
+ * Callers should trigger a page reload or call resetAnalytics() to purge PII.
  */
 export function disableAnalytics(): void {
   isBlocked = true

@@ -526,4 +526,86 @@ describe('analytics', () => {
       }
     })
   })
+
+  describe('consent lifecycle integration', () => {
+    it('queued events are permanently lost after disable/enable cycle (AC-15)', () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      track('queued_event_1', { data: 'before_decline' })
+      track('queued_event_2', { data: 'before_decline' })
+
+      disableAnalytics()
+
+      localStorage.removeItem(CONSENT_STORAGE_KEY)
+
+      enableAnalytics({ ...baseConfig, debug: true })
+
+      expect(logSpy).not.toHaveBeenCalledWith(
+        '[analytics:track]',
+        expect.objectContaining({ name: 'queued_event_1' }),
+      )
+      expect(logSpy).not.toHaveBeenCalledWith(
+        '[analytics:track]',
+        expect.objectContaining({ name: 'queued_event_2' }),
+      )
+
+      logSpy.mockRestore()
+    })
+
+    it('PII persists in analyticsState after disableAnalytics (AC-13)', () => {
+      // KNOWN LIMITATION (GDPR Art. 17): disableAnalytics() does not clear
+      // in-memory userId/traits. Callers must trigger a page reload or call
+      // resetAnalytics() to purge PII after consent revocation.
+      initAnalytics({ ...baseConfig, debug: true })
+      identify('user-123', { email: 'test@example.com' })
+
+      expect(getAnalyticsState()?.userId).toBe('user-123')
+      expect(getAnalyticsState()?.traits).toEqual({ email: 'test@example.com' })
+
+      disableAnalytics()
+
+      expect(getAnalyticsState()?.userId).toBe('user-123')
+      expect(getAnalyticsState()?.traits).toEqual({ email: 'test@example.com' })
+    })
+
+    it('enableAnalytics does nothing when not blocked (no-op)', () => {
+      initAnalytics(baseConfig)
+      expect(isAnalyticsEnabled()).toBe(true)
+
+      enableAnalytics(baseConfig)
+
+      expect(isAnalyticsEnabled()).toBe(true)
+    })
+  })
+
+  describe('queued page view flush', () => {
+    it('processQueue flushes queued page views via __page__ debug path (AC-5)', () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      trackPage({ path: '/queued-page' })
+
+      initAnalytics({ ...baseConfig, debug: true })
+
+      expect(logSpy).toHaveBeenCalledWith('[analytics:page]', { path: '/queued-page' })
+
+      logSpy.mockRestore()
+    })
+
+    it('processQueue flushes both page views and regular events', () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      track('regular_event', { key: 'value' })
+      trackPage({ path: '/test-page' })
+
+      initAnalytics({ ...baseConfig, debug: true })
+
+      expect(logSpy).toHaveBeenCalledWith('[analytics:track]', {
+        name: 'regular_event',
+        properties: { key: 'value' },
+      })
+      expect(logSpy).toHaveBeenCalledWith('[analytics:page]', { path: '/test-page' })
+
+      logSpy.mockRestore()
+    })
+  })
 })

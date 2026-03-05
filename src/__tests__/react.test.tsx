@@ -309,11 +309,96 @@ describe('react', () => {
       expect(result.current.consent).toBe(null)
       expect(result.current.hasResponded).toBe(false)
     })
+
+    it('updateConsent enables analytics when category is analytics and value is true (AC-S1)', async () => {
+      const { result } = renderHook(() => useAnalytics(), {
+        wrapper: wrapper(),
+      })
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      act(() => {
+        result.current.acceptAll()
+      })
+
+      act(() => {
+        result.current.updateConsent('analytics', false)
+      })
+
+      expect(result.current.consent?.analytics).toBe(false)
+
+      act(() => {
+        result.current.updateConsent('analytics', true)
+      })
+
+      expect(result.current.consent?.analytics).toBe(true)
+    })
+
+    it('loads stored consent with analytics declined without initializing analytics', async () => {
+      const declinedConsent: ConsentState = {
+        analytics: false,
+        functional: true,
+        timestamp: '2025-01-01T00:00:00.000Z',
+        version: 1,
+      }
+      localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(declinedConsent))
+
+      const { result } = renderHook(() => useAnalytics(), {
+        wrapper: wrapper(),
+      })
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(result.current.consent).toEqual(declinedConsent)
+      expect(result.current.hasResponded).toBe(true)
+    })
+
+    it('updateConsent with functional category does not toggle analytics', async () => {
+      const { result } = renderHook(() => useAnalytics(), {
+        wrapper: wrapper(),
+      })
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      act(() => {
+        result.current.acceptAll()
+      })
+
+      act(() => {
+        result.current.updateConsent('functional', true)
+      })
+
+      expect(result.current.consent?.functional).toBe(true)
+      expect(result.current.consent?.analytics).toBe(true)
+    })
+
+    it('updateConsent does nothing when consent is null (AC-S2)', async () => {
+      const { result } = renderHook(() => useAnalytics(), {
+        wrapper: wrapper(),
+      })
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(result.current.consent).toBe(null)
+
+      act(() => {
+        result.current.updateConsent('analytics', false)
+      })
+
+      expect(result.current.consent).toBe(null)
+    })
   })
 
   describe('useAnalytics error handling', () => {
     it('throws when used outside provider', () => {
-      // Suppress console.error for this test
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       expect(() => {
