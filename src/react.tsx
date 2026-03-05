@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   createContext,
@@ -8,9 +8,9 @@ import {
   useEffect,
   useMemo,
   useState,
-} from 'react'
+} from "react";
 
-import { disableAnalytics, enableAnalytics, initAnalytics } from './analytics'
+import { disableAnalytics, enableAnalytics, initAnalytics } from "./analytics";
 import {
   clearConsent,
   CONSENT_VERSION,
@@ -20,28 +20,28 @@ import {
   needsRePrompt,
   saveConsent,
   updateConsentCategory,
-} from './consent'
+} from "./consent";
 import type {
   AnalyticsConfig,
   ConsentCategory,
   ConsentState,
   UseConsentOptions,
   UseConsentReturn,
-} from './types'
+} from "./types";
 
 // Context for analytics configuration
 type AnalyticsContextValue = {
-  acceptAll: () => void
-  config: AnalyticsConfig
-  consent: ConsentState | null
-  declineAnalytics: () => void
-  hasResponded: boolean
-  isLoading: boolean
-  resetConsent: () => void
-  updateConsent: (category: ConsentCategory, value: boolean) => void
-}
+  acceptAll: () => void;
+  config: AnalyticsConfig;
+  consent: ConsentState | null;
+  declineAnalytics: () => void;
+  hasResponded: boolean;
+  isLoading: boolean;
+  resetConsent: () => void;
+  updateConsent: (category: ConsentCategory, value: boolean) => void;
+};
 
-const AnalyticsContext = createContext<AnalyticsContextValue | null>(null)
+const AnalyticsContext = createContext<AnalyticsContextValue | null>(null);
 
 /**
  * Analytics provider component
@@ -51,80 +51,71 @@ export function AnalyticsProvider({
   config,
   consentVersion = CONSENT_VERSION,
 }: {
-  children: ReactNode
-  config: AnalyticsConfig
-  consentVersion?: number
+  children: ReactNode;
+  config: AnalyticsConfig;
+  consentVersion?: number;
 }) {
-  const [consent, setConsent] = useState<ConsentState | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasResponded, setHasResponded] = useState(false)
-
-  // Load consent on mount
-  useEffect(() => {
-    const stored = loadConsent()
-
-    if (stored) {
-      // Check if we need to re-prompt due to version change
-      if (needsRePrompt(stored, consentVersion)) {
-        clearConsent()
-        setConsent(null)
-        setHasResponded(false)
-      } else {
-        setConsent(stored)
-        setHasResponded(true)
-
-        // Initialize analytics based on consent
-        if (stored.analytics) {
-          initAnalytics(config)
-        }
-      }
+  const [consent, setConsent] = useState<ConsentState | null>(() => {
+    const stored = loadConsent();
+    if (!stored) return null;
+    if (needsRePrompt(stored, consentVersion)) {
+      clearConsent();
+      return null;
     }
+    return stored;
+  });
 
-    setIsLoading(false)
-  }, [config, consentVersion])
+  const [hasResponded, setHasResponded] = useState(() => consent !== null);
+
+  // Initialize analytics if stored consent allows
+  useEffect(() => {
+    if (consent?.analytics) {
+      initAnalytics(config);
+    }
+  }, [consent, config]);
 
   const acceptAll = useCallback(() => {
-    const newConsent = createAcceptAllConsent()
-    saveConsent(newConsent)
-    setConsent(newConsent)
-    setHasResponded(true)
-    enableAnalytics(config)
-  }, [config])
+    const newConsent = createAcceptAllConsent();
+    saveConsent(newConsent);
+    setConsent(newConsent);
+    setHasResponded(true);
+    enableAnalytics(config);
+  }, [config]);
 
   const declineAnalytics = useCallback(() => {
-    const newConsent = createDeclineAnalyticsConsent()
-    saveConsent(newConsent)
-    setConsent(newConsent)
-    setHasResponded(true)
-    disableAnalytics()
-  }, [])
+    const newConsent = createDeclineAnalyticsConsent();
+    saveConsent(newConsent);
+    setConsent(newConsent);
+    setHasResponded(true);
+    disableAnalytics();
+  }, []);
 
   const updateConsentHandler = useCallback(
     (category: ConsentCategory, value: boolean) => {
-      if (!consent) return
+      if (!consent) return;
 
-      const newConsent = updateConsentCategory(consent, category, value)
-      saveConsent(newConsent)
-      setConsent(newConsent)
+      const newConsent = updateConsentCategory(consent, category, value);
+      saveConsent(newConsent);
+      setConsent(newConsent);
 
       // Update analytics state
-      if (category === 'analytics') {
+      if (category === "analytics") {
         if (value) {
-          enableAnalytics(config)
+          enableAnalytics(config);
         } else {
-          disableAnalytics()
+          disableAnalytics();
         }
       }
     },
     [consent, config],
-  )
+  );
 
   const resetConsentHandler = useCallback(() => {
-    clearConsent()
-    setConsent(null)
-    setHasResponded(false)
-    disableAnalytics()
-  }, [])
+    clearConsent();
+    setConsent(null);
+    setHasResponded(false);
+    disableAnalytics();
+  }, []);
 
   const value = useMemo<AnalyticsContextValue>(
     () => ({
@@ -133,7 +124,7 @@ export function AnalyticsProvider({
       consent,
       declineAnalytics,
       hasResponded,
-      isLoading,
+      isLoading: false,
       resetConsent: resetConsentHandler,
       updateConsent: updateConsentHandler,
     }),
@@ -141,97 +132,90 @@ export function AnalyticsProvider({
       config,
       consent,
       hasResponded,
-      isLoading,
       acceptAll,
       declineAnalytics,
       updateConsentHandler,
       resetConsentHandler,
     ],
-  )
+  );
 
-  return <AnalyticsContext.Provider value={value}>{children}</AnalyticsContext.Provider>
+  return (
+    <AnalyticsContext.Provider value={value}>
+      {children}
+    </AnalyticsContext.Provider>
+  );
 }
 
 /**
  * Hook to access analytics context
  */
 export function useAnalytics() {
-  const context = useContext(AnalyticsContext)
+  const context = useContext(AnalyticsContext);
   if (!context) {
-    throw new Error('useAnalytics must be used within an AnalyticsProvider')
+    throw new Error("useAnalytics must be used within an AnalyticsProvider");
   }
-  return context
+  return context;
 }
 
 /**
  * Hook to manage consent state
  */
 export function useConsent(options: UseConsentOptions = {}): UseConsentReturn {
-  const { consentVersion = CONSENT_VERSION } = options
+  const { consentVersion = CONSENT_VERSION } = options;
 
-  const [consent, setConsent] = useState<ConsentState | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasResponded, setHasResponded] = useState(false)
-
-  // Load consent on mount
-  useEffect(() => {
-    const stored = loadConsent()
-
-    if (stored) {
-      if (needsRePrompt(stored, consentVersion)) {
-        clearConsent()
-        setConsent(null)
-        setHasResponded(false)
-      } else {
-        setConsent(stored)
-        setHasResponded(true)
-      }
+  const [consent, setConsent] = useState<ConsentState | null>(() => {
+    const stored = loadConsent();
+    if (!stored) return null;
+    if (needsRePrompt(stored, consentVersion)) {
+      clearConsent();
+      return null;
     }
+    return stored;
+  });
 
-    setIsLoading(false)
-  }, [consentVersion])
+  const [hasResponded, setHasResponded] = useState(() => consent !== null);
 
   const acceptAll = useCallback(() => {
-    const newConsent = createAcceptAllConsent()
-    saveConsent(newConsent)
-    setConsent(newConsent)
-    setHasResponded(true)
-  }, [])
+    const newConsent = createAcceptAllConsent();
+    saveConsent(newConsent);
+    setConsent(newConsent);
+    setHasResponded(true);
+  }, []);
 
   const declineAnalytics = useCallback(() => {
-    const newConsent = createDeclineAnalyticsConsent()
-    saveConsent(newConsent)
-    setConsent(newConsent)
-    setHasResponded(true)
-  }, [])
+    const newConsent = createDeclineAnalyticsConsent();
+    saveConsent(newConsent);
+    setConsent(newConsent);
+    setHasResponded(true);
+  }, []);
 
   const updateConsentHandler = useCallback(
     (category: ConsentCategory, value: boolean) => {
-      if (!consent) return
+      if (!consent) return;
 
-      const newConsent = updateConsentCategory(consent, category, value)
-      saveConsent(newConsent)
-      setConsent(newConsent)
+      const newConsent = updateConsentCategory(consent, category, value);
+      saveConsent(newConsent);
+      setConsent(newConsent);
     },
     [consent],
-  )
+  );
 
   const resetConsentHandler = useCallback(() => {
-    clearConsent()
-    setConsent(null)
-    setHasResponded(false)
-  }, [])
+    clearConsent();
+    setConsent(null);
+    setHasResponded(false);
+  }, []);
 
   return {
     acceptAll,
     consent,
     declineAnalytics,
     hasResponded,
-    isLoading,
+    isLoading: false,
     resetConsent: resetConsentHandler,
     updateConsent: updateConsentHandler,
-  }
+  };
 }
 
 // Re-export core analytics functions for convenience
-export { initAnalytics } from './analytics'
+export { initAnalytics } from "./analytics";
