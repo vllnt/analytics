@@ -9,6 +9,17 @@ export default defineConfig({
     },
   },
   test: {
+    coverage: {
+      exclude: ['src/__tests__/**', 'src/types.ts'],
+      include: ['src/**/*.{ts,tsx}'],
+      provider: 'v8',
+      thresholds: {
+        branches: 100,
+        functions: 100,
+        lines: 100,
+        statements: 100,
+      },
+    },
     environment: 'jsdom',
     globals: true,
     include: ['src/**/*.test.{ts,tsx}'],

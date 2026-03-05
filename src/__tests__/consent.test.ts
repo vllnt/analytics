@@ -363,5 +363,197 @@ describe('consent', () => {
     it('handles multiple cookies', () => {
       expect(getConsentFromCookie(`other=value; ${CONSENT_COOKIE_NAME}=1; another=test`)).toBe(true)
     })
+
+    it('returns null for empty string', () => {
+      expect(getConsentFromCookie('')).toBe(null)
+    })
+
+    it.fails('rejects substring cookie names once regex is anchored (AC-18)', () => {
+      // BUG: getConsentFromCookie regex lacks word-boundary/anchoring, so
+      // "evil-vllnt-consent=1" matches as if it were "vllnt-consent=1".
+      // This test documents the correct behavior: should return null.
+      // It currently fails because the bug exists. When the regex is fixed,
+      // this test will start passing — remove `.fails` at that point.
+      expect(getConsentFromCookie(`evil-${CONSENT_COOKIE_NAME}=1`)).toBe(null)
+    })
+  })
+
+  describe('isStorageAvailable edge cases', () => {
+    it('returns false when localStorage.setItem throws (AC-6)', () => {
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceededError')
+      })
+
+      expect(isStorageAvailable()).toBe(false)
+
+      setItemSpy.mockRestore()
+    })
+  })
+
+  describe('storage unavailable paths', () => {
+    let setItemSpy: ReturnType<typeof vi.spyOn>
+    let getItemSpy: ReturnType<typeof vi.spyOn>
+    let removeItemSpy: ReturnType<typeof vi.spyOn>
+
+    beforeEach(() => {
+      setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceededError')
+      })
+      getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('SecurityError')
+      })
+      removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+        throw new Error('SecurityError')
+      })
+    })
+
+    afterEach(() => {
+      setItemSpy.mockRestore()
+      getItemSpy.mockRestore()
+      removeItemSpy.mockRestore()
+    })
+
+    it('loadConsent returns null when storage unavailable (AC-7)', () => {
+      expect(loadConsent()).toBe(null)
+    })
+
+    it('saveConsent returns early without error when storage unavailable (AC-7)', () => {
+      const state: ConsentState = {
+        analytics: true,
+        functional: true,
+        timestamp: '2025-01-01T00:00:00.000Z',
+        version: 1,
+      }
+
+      expect(() => saveConsent(state)).not.toThrow()
+    })
+
+    it('clearConsent returns early without error when storage unavailable (AC-7)', () => {
+      expect(() => clearConsent()).not.toThrow()
+    })
+  })
+
+  describe('saveConsent error handling', () => {
+    it('calls console.warn when localStorage.setItem throws after availability check (AC-8)', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key: string) => {
+        if (key === '__storage_test__') return undefined
+        throw new Error('QuotaExceededError')
+      })
+
+      const state: ConsentState = {
+        analytics: true,
+        functional: true,
+        timestamp: '2025-01-01T00:00:00.000Z',
+        version: 1,
+      }
+
+      saveConsent(state)
+
+      expect(warnSpy).toHaveBeenCalledWith('Failed to save consent:', expect.any(Error))
+
+      setItemSpy.mockRestore()
+      warnSpy.mockRestore()
+    })
+  })
+
+  describe('clearConsent error handling', () => {
+    it('does not throw when localStorage.removeItem fails', () => {
+      const removeItemSpy = vi
+        .spyOn(Storage.prototype, 'removeItem')
+        .mockImplementation(() => {
+          throw new Error('SecurityError')
+        })
+
+      expect(() => clearConsent()).not.toThrow()
+
+      removeItemSpy.mockRestore()
+    })
+  })
+
+  describe('DNT fallback isolation', () => {
+    afterEach(() => {
+      Object.defineProperty(window, 'doNotTrack', {
+        configurable: true,
+        value: undefined,
+        writable: true,
+      })
+      Object.defineProperty(navigator, 'msDoNotTrack', {
+        configurable: true,
+        value: undefined,
+        writable: true,
+      })
+    })
+
+    it('detects window.doNotTrack when navigator.doNotTrack is undefined (AC-11)', () => {
+      Object.defineProperty(navigator, 'doNotTrack', {
+        configurable: true,
+        value: undefined,
+        writable: true,
+      })
+
+      Object.defineProperty(window, 'doNotTrack', {
+        configurable: true,
+        value: '1',
+        writable: true,
+      })
+
+      expect(isDoNotTrackEnabled()).toBe(true)
+    })
+
+    it('detects navigator.msDoNotTrack when other fallbacks are undefined (AC-12)', () => {
+      Object.defineProperty(navigator, 'doNotTrack', {
+        configurable: true,
+        value: undefined,
+        writable: true,
+      })
+
+      Object.defineProperty(window, 'doNotTrack', {
+        configurable: true,
+        value: undefined,
+        writable: true,
+      })
+
+      Object.defineProperty(navigator, 'msDoNotTrack', {
+        configurable: true,
+        value: '1',
+        writable: true,
+      })
+
+      expect(isDoNotTrackEnabled()).toBe(true)
+    })
+
+    it('returns false for truthy non-DNT string "unspecified" (AC-19)', () => {
+      Object.defineProperty(navigator, 'doNotTrack', {
+        configurable: true,
+        value: 'unspecified',
+        writable: true,
+      })
+
+      expect(isDoNotTrackEnabled()).toBe(false)
+    })
+  })
+
+  describe('consent round-trip under storage failure', () => {
+    it('consent reversal occurs when saveConsent fails silently (AC-10)', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key: string) => {
+        if (key === '__storage_test__') return undefined
+        throw new Error('QuotaExceededError')
+      })
+
+      const declinedConsent = createDeclineAnalyticsConsent()
+      saveConsent(declinedConsent)
+
+      setItemSpy.mockRestore()
+
+      const reloaded = loadConsent()
+
+      expect(reloaded).toBe(null)
+
+      warnSpy.mockRestore()
+    })
   })
 })
