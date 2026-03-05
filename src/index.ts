@@ -15,7 +15,7 @@ export {
   trackTutorialComplete,
   trackTutorialNavigation,
   trackTutorialStart,
-} from './analytics'
+} from "./analytics";
 
 // Consent management
 export {
@@ -33,7 +33,7 @@ export {
   needsRePrompt,
   saveConsent,
   updateConsentCategory,
-} from './consent'
+} from "./consent";
 
 // Types
 export type {
@@ -45,4 +45,4 @@ export type {
   TutorialEventProperties,
   UseConsentOptions,
   UseConsentReturn,
-} from './types'
+} from "./types";
