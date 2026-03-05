@@ -1,6 +1,6 @@
 ---
 title: Achieve 100% Test Coverage
-status: active
+status: shipped
 created: 2026-03-05
 estimate: 3h
 tier: standard
@@ -354,7 +354,7 @@ Spec review applied: 2026-03-05. Perspectives: Testing Architect, Library Consum
 | 10 | react.tsx coverage gaps | [x] Complete | 1 |
 | 11 | SSR test file (node env) | [x] Complete | 1 |
 | 12 | Coverage thresholds in vitest config | [x] Complete | 1 |
-| 13 | Verify 100% coverage | [ ] Blocked | monorepo deps needed |
+| 13 | Verify 100% coverage | [x] Complete | 2 (standalone install) |
 
 ## Timeline
 
@@ -364,3 +364,12 @@ Spec review applied: 2026-03-05. Perspectives: Testing Architect, Library Consum
 | spec-review | 2026-03-05T00:00:00Z | - | 4 perspectives: Testing Architect, Library Consumer, Privacy/Compliance, Skeptic. Verdict: NOT_READY -> updated |
 | spec-review merge | 2026-03-05T00:00:00Z | - | Added P0 integration ACs, SSR test file strategy, adversarial tests, revised estimate to 3h |
 | ship | 2026-03-05T00:00:00Z | - | All test files written. 12/13 scope items complete. Pending: monorepo install + coverage verification. |
+| review | 2026-03-05T00:00:00Z | - | Deep code review (9 perspectives). 3 high + 3 medium findings. All fixed. |
+| done | 2026-03-05T00:00:00Z | ~2.5h | 119 tests, 100% coverage verified. PR #1 created. |
+
+## Ship Retro (2026-03-05)
+
+**Estimate vs Actual:** 3h -> 2.5h (120% accuracy)
+**What worked:** Spec-first with adversarial spec review caught 6 blind spots before coding. SSR via `@vitest-environment node` was cleaner than istanbul ignores. Deep review caught the bug-protecting test (AC-18) before it shipped.
+**What didn't:** Monorepo `workspace:*` deps blocked standalone testing. Required temporary tsconfig/package.json stubs to verify coverage locally.
+**Next time:** For monorepo-extracted packages, include a `test:standalone` script or CI job that handles workspace dep stubs automatically.
