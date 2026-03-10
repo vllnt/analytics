@@ -1,6 +1,6 @@
 {
   "name": "@vllnt/analytics",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lightweight, privacy-first analytics with consent management and React integration",
   "type": "module",
   "packageManager": "pnpm@9.15.4",
