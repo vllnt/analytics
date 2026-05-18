@@ -4,7 +4,7 @@ All notable changes to `@vllnt/analytics` are documented in this file.
 
 This project follows npm package versions and uses GitHub Releases for published release notes. Public release work must pass a maintainer release-review gate before any tag, publish, or announcement.
 
-## [0.1.1] - 2026-05-18
+## [0.1.1] - 2026-03-10
 
 ### Fixed
 
@@ -15,8 +15,9 @@ This project follows npm package versions and uses GitHub Releases for published
 - Latest npm tag: `0.1.1`.
 - Canary npm tag at the time of this backfill: `0.1.1-canary.106d5aa`.
 - Git tag: `v0.1.1`.
+- Release date reflects the public npm publish timestamp and GitHub Release publication date.
 
-## [0.1.0] - 2026-05-18
+## [0.1.0] - 2026-03-05
 
 ### Added
 
