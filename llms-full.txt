@@ -1,0 +1,140 @@
+# @vllnt/analytics full context
+
+`@vllnt/analytics` is a lightweight, privacy-first analytics package with consent management and React integration. It is designed for applications that want a small analytics abstraction without taking a hard dependency on a vendor SDK.
+
+## Package metadata
+
+- npm package: `@vllnt/analytics`
+- Repository: https://github.com/vllnt/analytics
+- License: MIT
+- Type: ESM TypeScript package
+- Current package version in `package.json`: `0.1.1`
+- Peer dependency: `react ^18.0.0 || ^19.0.0`
+- Package manager: `pnpm@9.15.4`
+
+## Public exports
+
+The root export, `@vllnt/analytics`, re-exports:
+
+### Analytics functions
+
+- `initAnalytics(config)`: initialize the singleton analytics state.
+- `track(name, properties?)`: track a custom event.
+- `trackPage(properties?)`: track a page view.
+- `identify(userId, traits?)`: attach user identity and traits after initialization.
+- `resetAnalytics()`: clear in-memory identity and traits.
+- `enableAnalytics(config)`: enable analytics after consent is granted.
+- `disableAnalytics()`: block tracking and clear queued events after consent is revoked.
+- `isAnalyticsEnabled()`: report whether tracking is initialized and unblocked.
+- `getAnalyticsState()`: inspect advanced/debug state.
+
+### Tutorial/content tracking helpers
+
+- `trackTutorialStart(properties)`
+- `trackSectionView(properties)`
+- `trackSectionComplete(properties)`
+- `trackTutorialComplete(properties)`
+- `trackTutorialNavigation(properties)`
+- `trackTimeSpent(properties)`
+
+These helpers emit typed tutorial event names such as `tutorial_start`, `tutorial_section_view`, `tutorial_section_complete`, `tutorial_complete`, `tutorial_navigation`, and `tutorial_time_spent`.
+
+### Consent functions and constants
+
+- `CONSENT_VERSION`
+- `CONSENT_STORAGE_KEY`
+- `CONSENT_COOKIE_NAME`
+- `loadConsent()`
+- `saveConsent(state)`
+- `clearConsent()`
+- `createAcceptAllConsent()`
+- `createDeclineAnalyticsConsent()`
+- `updateConsentCategory(current, category, value)`
+- `needsRePrompt(consent, currentVersion)`
+- `getConsentFromCookie(cookieString)`
+- `isDoNotTrackEnabled()`
+- `isStorageAvailable()`
+- `isValidConsentState(value)`
+
+### Types
+
+- `AnalyticsConfig`
+- `AnalyticsEvent`
+- `ConsentCategory`
+- `ConsentState`
+- `TutorialEventName`
+- `TutorialEventProperties`
+- `UseConsentOptions`
+- `UseConsentReturn`
+
+The React subpath, `@vllnt/analytics/react`, exports:
+
+- `AnalyticsProvider`
+- `useAnalytics()`
+- `useConsent(options?)`
+- `initAnalytics` convenience re-export
+
+## Behavior model
+
+1. Browser-only tracking functions return early during SSR.
+2. Initialization checks Do Not Track first.
+3. Initialization then checks stored consent; declined analytics blocks tracking.
+4. Events fired before initialization are queued.
+5. Once analytics initializes, queued events are flushed.
+6. Consent utilities store state in localStorage and mirror analytics consent as a one-year cookie for SSR detection.
+7. Consent versions allow applications to re-prompt by increasing the version.
+8. Functional consent cannot be disabled through `updateConsentCategory`.
+
+## Privacy posture
+
+The package intentionally avoids a default external analytics dependency. `sendEvent` is the central integration point where an application can wire a custom backend, Vercel Analytics, Google Analytics, or another destination. The React provider coordinates consent and initialization but does not override Do Not Track or declined consent.
+
+## Repository map
+
+- `src/index.ts`: public root exports.
+- `src/analytics.ts`: singleton state, event queueing, initialization, custom/page/tutorial tracking, identity, reset, enable/disable logic.
+- `src/consent.ts`: consent state validation, localStorage/cookie persistence, Do Not Track detection, version re-prompt checks.
+- `src/react.tsx`: client React provider and hooks.
+- `src/types.ts`: public TypeScript definitions.
+- `src/__tests__/analytics.test.ts`: analytics behavior tests.
+- `src/__tests__/consent.test.ts`: consent behavior tests.
+- `src/__tests__/exports.test.ts`: export-surface tests.
+- `src/__tests__/react.test.tsx`: React provider/hook tests.
+- `src/__tests__/ssr.test.ts`: SSR safety tests.
+- `vitest.config.ts`: Vitest configuration.
+- `eslint.config.js`: ESLint configuration using `@vllnt/eslint-config`.
+- `.github/workflows/ci.yml`: pull-request lint, typecheck, and test gates.
+- `.github/workflows/publish.yml`: canary publishing on main pushes affecting package files and manual release publishing via workflow dispatch.
+
+## Development commands
+
+```bash
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm exec tsc --noEmit
+pnpm test:once
+pnpm test:coverage
+```
+
+## Release and opsec notes
+
+- Ordinary changes must not bump the package version.
+- Release tags and npm publishing must only happen through approved release workflow actions.
+- The manual release workflow bumps `package.json`, commits, tags, publishes to npm with provenance, and creates a GitHub Release.
+- Public docs must not include secrets, private customer data, private URLs, or internal operating mechanics.
+- Release-preparation work must carry the VLLNT OSS release-review gate before merge, tag, publish, or announcement.
+
+## Release-review gate template
+
+```json
+{
+  "branch": "vllnt-oss",
+  "tenant": "releases",
+  "aor_fit": true,
+  "context_read": true,
+  "evidence_attached": true,
+  "opsec_checked": true,
+  "safe_for_next_step": true,
+  "blocking_findings": []
+}
+```
