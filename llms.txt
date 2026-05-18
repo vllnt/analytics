@@ -1,0 +1,59 @@
+# @vllnt/analytics
+
+> Lightweight, privacy-first analytics with consent management and React integration.
+
+This file helps AI coding tools and documentation systems understand the public package surface. For full context, see `llms-full.txt`.
+
+## Project
+
+- Package: `@vllnt/analytics`
+- Repository: https://github.com/vllnt/analytics
+- License: MIT
+- Runtime: TypeScript ESM package
+- Peer dependency: React `^18.0.0 || ^19.0.0`
+- Package manager: pnpm 9.x
+
+## Install
+
+```bash
+pnpm add @vllnt/analytics
+```
+
+## Public entry points
+
+- `@vllnt/analytics`: core analytics and consent APIs.
+- `@vllnt/analytics/react`: React provider and hooks.
+
+## Main capabilities
+
+- Consent-aware event tracking with pre-initialization queueing.
+- Page-view, identity, reset, and tutorial/content tracking helpers.
+- Consent persistence in localStorage plus SSR-readable cookie state.
+- Do Not Track detection.
+- SSR-safe guards around browser APIs.
+- React `AnalyticsProvider`, `useAnalytics`, and `useConsent` helpers.
+
+## Important files
+
+- `README.md`: install, usage examples, API summary.
+- `CHANGELOG.md`: public package history.
+- `CONTRIBUTING.md`: development and release-review expectations.
+- `SECURITY.md`: vulnerability reporting policy.
+- `AGENTS.md`: repository instructions for AI/code agents.
+- `src/index.ts`: root exports.
+- `src/analytics.ts`: analytics singleton and tracking helpers.
+- `src/consent.ts`: consent state utilities.
+- `src/react.tsx`: React integration.
+- `src/types.ts`: public types.
+
+## Local quality gates
+
+```bash
+pnpm lint
+pnpm exec tsc --noEmit
+pnpm test:once
+```
+
+## Release safety
+
+Do not tag, publish, merge release work, bump versions, or announce releases without explicit maintainer approval and a release-review gate.
