@@ -238,20 +238,14 @@ export function getAnalyticsState(): AnalyticsState | undefined {
 export function trackTutorialStart(
   properties: Omit<TutorialEventProperties, "section_id">,
 ): void {
-  track(
-    "tutorial_start" satisfies TutorialEventName,
-    properties as Record<string, unknown>,
-  );
+  track("tutorial_start" satisfies TutorialEventName, properties);
 }
 
 /**
  * Track section view
  */
 export function trackSectionView(properties: TutorialEventProperties): void {
-  track(
-    "tutorial_section_view" satisfies TutorialEventName,
-    properties as Record<string, unknown>,
-  );
+  track("tutorial_section_view" satisfies TutorialEventName, properties);
 }
 
 /**
@@ -260,10 +254,7 @@ export function trackSectionView(properties: TutorialEventProperties): void {
 export function trackSectionComplete(
   properties: TutorialEventProperties,
 ): void {
-  track(
-    "tutorial_section_complete" satisfies TutorialEventName,
-    properties as Record<string, unknown>,
-  );
+  track("tutorial_section_complete" satisfies TutorialEventName, properties);
 }
 
 /**
@@ -272,10 +263,7 @@ export function trackSectionComplete(
 export function trackTutorialComplete(
   properties: Omit<TutorialEventProperties, "section_id">,
 ): void {
-  track(
-    "tutorial_complete" satisfies TutorialEventName,
-    properties as Record<string, unknown>,
-  );
+  track("tutorial_complete" satisfies TutorialEventName, properties);
 }
 
 /**
@@ -286,10 +274,7 @@ export function trackTutorialNavigation(
     navigation_type: "keyboard" | "next" | "prev" | "toc";
   },
 ): void {
-  track(
-    "tutorial_navigation" satisfies TutorialEventName,
-    properties as Record<string, unknown>,
-  );
+  track("tutorial_navigation" satisfies TutorialEventName, properties);
 }
 
 /**
@@ -298,8 +283,5 @@ export function trackTutorialNavigation(
 export function trackTimeSpent(
   properties: TutorialEventProperties & { time_spent_seconds: number },
 ): void {
-  track(
-    "tutorial_time_spent" satisfies TutorialEventName,
-    properties as Record<string, unknown>,
-  );
+  track("tutorial_time_spent" satisfies TutorialEventName, properties);
 }
