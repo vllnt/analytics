@@ -124,6 +124,29 @@ describe("analytics", () => {
   });
 
   describe("track", () => {
+    it("ignores empty or non-string event names", () => {
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      initAnalytics({ ...baseConfig, debug: true });
+      logSpy.mockClear();
+      track("");
+      track(undefined as unknown as string);
+
+      expect(logSpy).not.toHaveBeenCalled();
+    });
+
+    it("does not queue invalid event names before initialization", () => {
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      track("");
+      initAnalytics({ ...baseConfig, debug: true });
+
+      expect(logSpy).not.toHaveBeenCalledWith(
+        "[analytics:track]",
+        expect.anything(),
+      );
+    });
+
     it("queues events before initialization", () => {
       // Track before init - should be queued without error
       expect(() => {
@@ -233,6 +256,14 @@ describe("analytics", () => {
   });
 
   describe("identify", () => {
+    it("ignores an empty user id", () => {
+      initAnalytics(baseConfig);
+      identify("user-1");
+      identify("");
+
+      expect(getAnalyticsState()?.userId).toBe("user-1");
+    });
+
     it("identifies user after initialization", () => {
       const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 

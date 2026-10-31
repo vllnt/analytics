@@ -169,7 +169,11 @@ export function isDoNotTrackEnabled(): boolean {
  * Get consent from cookie (for SSR)
  */
 export function getConsentFromCookie(cookieString: string): boolean | null {
-  const match = new RegExp(`${CONSENT_COOKIE_NAME}=([^;]+)`).exec(cookieString);
+  // Anchor to the start of the string or a cookie separator so that
+  // look-alike names such as "evil-vllnt-consent" are not matched.
+  const match = new RegExp(`(?:^|;\\s*)${CONSENT_COOKIE_NAME}=([^;]+)`).exec(
+    cookieString,
+  );
   if (!match) return null;
   return match[1] === "1";
 }
