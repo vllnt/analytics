@@ -19,31 +19,33 @@ pnpm add @vllnt/analytics
 
 Peer dependency: `react ^18.0.0 || ^19.0.0`
 
+Ships ESM and CommonJS builds with type declarations; no bundler transpilation of `node_modules` is needed.
+
 ## Usage
 
 ### React Provider
 
 ```tsx
-import { AnalyticsProvider } from '@vllnt/analytics/react'
+import { AnalyticsProvider } from "@vllnt/analytics/react";
 
 function App() {
   return (
-    <AnalyticsProvider config={{ app: 'my-app', version: 1, debug: true }}>
+    <AnalyticsProvider config={{ app: "my-app", version: 1, debug: true }}>
       {children}
     </AnalyticsProvider>
-  )
+  );
 }
 ```
 
 ### Consent Banner
 
 ```tsx
-import { useConsent } from '@vllnt/analytics/react'
+import { useConsent } from "@vllnt/analytics/react";
 
 function CookieBanner() {
-  const { hasResponded, isLoading, acceptAll, declineAnalytics } = useConsent()
+  const { hasResponded, isLoading, acceptAll, declineAnalytics } = useConsent();
 
-  if (isLoading || hasResponded) return null
+  if (isLoading || hasResponded) return null;
 
   return (
     <div>
@@ -51,20 +53,20 @@ function CookieBanner() {
       <button onClick={acceptAll}>Accept</button>
       <button onClick={declineAnalytics}>Decline</button>
     </div>
-  )
+  );
 }
 ```
 
 ### Track Events
 
 ```tsx
-import { track, trackPage } from '@vllnt/analytics'
+import { track, trackPage } from "@vllnt/analytics";
 
 // Generic event
-track('button_click', { id: 'cta-hero' })
+track("button_click", { id: "cta-hero" });
 
 // Page view
-trackPage({ path: '/about' })
+trackPage({ path: "/about" });
 ```
 
 ### Tutorial Tracking
@@ -79,35 +81,35 @@ import {
   trackTutorialComplete,
   trackTutorialNavigation,
   trackTimeSpent,
-} from '@vllnt/analytics'
+} from "@vllnt/analytics";
 
 trackTutorialStart({
-  tutorial_id: 'getting-started',
-  tutorial_title: 'Getting Started',
-  locale: 'en',
+  tutorial_id: "getting-started",
+  tutorial_title: "Getting Started",
+  locale: "en",
   total_sections: 5,
-})
+});
 
 trackSectionView({
-  tutorial_id: 'getting-started',
-  tutorial_title: 'Getting Started',
-  locale: 'en',
-  section_id: 'intro',
+  tutorial_id: "getting-started",
+  tutorial_title: "Getting Started",
+  locale: "en",
+  section_id: "intro",
   section_index: 0,
   total_sections: 5,
-})
+});
 ```
 
 ### Identify Users
 
 ```tsx
-import { identify, resetAnalytics } from '@vllnt/analytics'
+import { identify, resetAnalytics } from "@vllnt/analytics";
 
 // After login
-identify('user-123', { plan: 'pro' })
+identify("user-123", { plan: "pro" });
 
 // After logout
-resetAnalytics()
+resetAnalytics();
 ```
 
 ### Consent Utilities (non-React)
@@ -122,15 +124,15 @@ import {
   getConsentFromCookie,
   isDoNotTrackEnabled,
   needsRePrompt,
-} from '@vllnt/analytics'
+} from "@vllnt/analytics";
 
 // SSR: read consent from cookie header
-const analyticsAllowed = getConsentFromCookie(request.headers.cookie)
+const analyticsAllowed = getConsentFromCookie(request.headers.cookie);
 
 // Check if re-prompt needed after version bump
-const consent = loadConsent()
+const consent = loadConsent();
 if (consent && needsRePrompt(consent, 2)) {
-  clearConsent()
+  clearConsent();
 }
 ```
 
@@ -138,38 +140,38 @@ if (consent && needsRePrompt(consent, 2)) {
 
 ### Core
 
-| Function | Description |
-|---|---|
-| `initAnalytics(config)` | Initialize analytics singleton |
-| `track(name, properties?)` | Track a custom event |
-| `trackPage(properties?)` | Track a page view |
-| `identify(userId, traits?)` | Identify a user |
-| `resetAnalytics()` | Clear user identity (logout) |
-| `enableAnalytics(config)` | Re-enable after consent granted |
-| `disableAnalytics()` | Disable after consent revoked |
-| `isAnalyticsEnabled()` | Check if tracking is active |
+| Function                    | Description                                    |
+| --------------------------- | ---------------------------------------------- |
+| `initAnalytics(config)`     | Initialize analytics singleton                 |
+| `track(name, properties?)`  | Track a custom event (empty names are ignored) |
+| `trackPage(properties?)`    | Track a page view                              |
+| `identify(userId, traits?)` | Identify a user (empty ids are ignored)        |
+| `resetAnalytics()`          | Clear user identity (logout)                   |
+| `enableAnalytics(config)`   | Re-enable after consent granted                |
+| `disableAnalytics()`        | Disable after consent revoked                  |
+| `isAnalyticsEnabled()`      | Check if tracking is active                    |
 
 ### Consent
 
-| Function | Description |
-|---|---|
-| `loadConsent()` | Load consent from localStorage |
-| `saveConsent(state)` | Persist consent to localStorage + cookie |
-| `clearConsent()` | Remove consent (triggers re-prompt) |
-| `createAcceptAllConsent()` | Create accept-all consent state |
-| `createDeclineAnalyticsConsent()` | Create analytics-declined state |
-| `updateConsentCategory(state, category, value)` | Update a single category |
-| `needsRePrompt(consent, version)` | Check if version requires re-prompt |
-| `getConsentFromCookie(cookieString)` | Parse consent from cookie (SSR) |
-| `isDoNotTrackEnabled()` | Check browser DNT setting |
+| Function                                        | Description                              |
+| ----------------------------------------------- | ---------------------------------------- |
+| `loadConsent()`                                 | Load consent from localStorage           |
+| `saveConsent(state)`                            | Persist consent to localStorage + cookie |
+| `clearConsent()`                                | Remove consent (triggers re-prompt)      |
+| `createAcceptAllConsent()`                      | Create accept-all consent state          |
+| `createDeclineAnalyticsConsent()`               | Create analytics-declined state          |
+| `updateConsentCategory(state, category, value)` | Update a single category                 |
+| `needsRePrompt(consent, version)`               | Check if version requires re-prompt      |
+| `getConsentFromCookie(cookieString)`            | Parse consent from cookie (SSR)          |
+| `isDoNotTrackEnabled()`                         | Check browser DNT setting                |
 
 ### React (`@vllnt/analytics/react`)
 
-| Export | Description |
-|---|---|
-| `AnalyticsProvider` | Context provider — wires consent + analytics init |
-| `useAnalytics()` | Access full analytics context |
-| `useConsent(options?)` | Standalone consent hook for banner UIs |
+| Export                 | Description                                       |
+| ---------------------- | ------------------------------------------------- |
+| `AnalyticsProvider`    | Context provider — wires consent + analytics init |
+| `useAnalytics()`       | Access full analytics context                     |
+| `useConsent(options?)` | Standalone consent hook for banner UIs            |
 
 ## How It Works
 
@@ -196,6 +198,8 @@ pnpm test:once     # Run tests once
 pnpm test:coverage # Run with coverage
 pnpm lint          # Lint
 pnpm lint:fix      # Lint + autofix
+pnpm typecheck     # Type-check
+pnpm build         # Build dist (ESM, CJS, types)
 ```
 
 ## License

@@ -377,19 +377,20 @@ describe("consent", () => {
       expect(getConsentFromCookie("")).toBe(null);
     });
 
-    it.fails(
-      "rejects substring cookie names once regex is anchored (AC-18)",
-      () => {
-        // BUG: getConsentFromCookie regex lacks word-boundary/anchoring, so
-        // "evil-vllnt-consent=1" matches as if it were "vllnt-consent=1".
-        // This test documents the correct behavior: should return null.
-        // It currently fails because the bug exists. When the regex is fixed,
-        // this test will start passing — remove `.fails` at that point.
-        expect(getConsentFromCookie(`evil-${CONSENT_COOKIE_NAME}=1`)).toBe(
-          null,
-        );
-      },
-    );
+    it("ignores cookies whose name only ends with the consent cookie name (AC-18)", () => {
+      expect(getConsentFromCookie(`evil-${CONSENT_COOKIE_NAME}=1`)).toBe(null);
+      expect(
+        getConsentFromCookie(`a=b; evil-${CONSENT_COOKIE_NAME}=1; c=d`),
+      ).toBe(null);
+    });
+
+    it("prefers the exact cookie over a look-alike", () => {
+      expect(
+        getConsentFromCookie(
+          `evil-${CONSENT_COOKIE_NAME}=1; ${CONSENT_COOKIE_NAME}=0`,
+        ),
+      ).toBe(false);
+    });
   });
 
   describe("isStorageAvailable edge cases", () => {

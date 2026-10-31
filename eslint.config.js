@@ -2,7 +2,7 @@ import { react } from '@vllnt/eslint-config'
 
 export default [
   {
-    ignores: ['node_modules/**', 'eslint.config.js', 'coverage/**'],
+    ignores: ['node_modules/**', 'eslint.config.js', 'coverage/**', 'dist/**'],
   },
   ...react,
   {

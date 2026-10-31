@@ -118,13 +118,14 @@ function processQueue(): void {
 }
 
 /**
- * Track a custom event
+ * Track a custom event. Events with an empty or non-string name are ignored.
  */
 export function track(
   name: string,
   properties?: Record<string, unknown>,
 ): void {
   if (typeof window === "undefined") return;
+  if (typeof name !== "string" || name === "") return;
 
   if (isBlocked) return;
 
@@ -162,13 +163,14 @@ export function trackPage(properties?: Record<string, unknown>): void {
 }
 
 /**
- * Identify a user
+ * Identify a user. An empty or non-string user id is ignored.
  */
 export function identify(
   userId: string,
   traits?: Record<string, unknown>,
 ): void {
   if (typeof window === "undefined") return;
+  if (typeof userId !== "string" || userId === "") return;
   if (isBlocked) return;
 
   if (!isInitialized || !analyticsState) {
