@@ -1,0 +1,38 @@
+# @vllnt/analytics
+
+> Lightweight, privacy-first analytics with consent management and React integration.
+
+Facts for AI tools. The library has no transport: it queues and gates events, and only
+`console.log`s them when `debug: true`. Bring your own backend.
+
+## Package
+
+- npm: `@vllnt/analytics` (MIT), repo: https://github.com/vllnt/analytics
+- Ships ESM, CommonJS and type declarations from `dist` (built with tsup)
+- Entry points: `@vllnt/analytics` (core + consent + types), `@vllnt/analytics/react` (`AnalyticsProvider`, `useAnalytics`, `useConsent`, `initAnalytics`)
+- Peer dependency: React `^18.0.0 || ^19.0.0`
+- Install: `pnpm add @vllnt/analytics`
+
+## Behaviour
+
+- Events tracked before `initAnalytics()` are queued and flushed on init.
+- Blocked when Do Not Track is on (`"1"` or `"yes"`) or stored consent has `analytics: false`.
+- Consent is stored in `localStorage` (`vllnt:analytics-consent`) and a `vllnt-consent` cookie
+  (`1` or `0`) for SSR; `getConsentFromCookie(cookieString)` reads it with an anchored match.
+- Consent is versioned (`CONSENT_VERSION`); a lower stored version re-prompts.
+- `track()` ignores empty or non-string names; `identify()` ignores empty or non-string ids.
+- Browser APIs are guarded, so server-side import is safe.
+
+## Docs
+
+- README.md: usage and API summary
+- CHANGELOG.md: release history
+- CONTRIBUTING.md: setup, checks, release flow
+- SECURITY.md: private vulnerability reporting
+- AGENTS.md: instructions for coding agents
+- src/index.ts, src/react.tsx: public exports
+
+## Develop
+
+Node per `.node-version`, pnpm per `packageManager`:
+`pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build`
