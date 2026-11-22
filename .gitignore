@@ -3,3 +3,4 @@ coverage/
 *.tsbuildinfo
 .mcp.json
 dist/
+.privacy-denylist.local
