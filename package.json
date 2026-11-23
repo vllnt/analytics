@@ -82,6 +82,7 @@
       "@vllnt/*"
     ],
     "overrides": {
+      "minimatch@>=7.0.0 <11.0.1": "11.0.5",
       "deepmerge-ts@<8.0.0": "8.0.0",
       "handlebars@<4.7.10": "4.7.10"
     },
