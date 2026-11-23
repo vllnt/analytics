@@ -25,6 +25,8 @@ export default [
   {
     files: ['**/__tests__/**', '**/*.test.ts', '**/*.test.tsx'],
     rules: {
+      // Conventional test directory name (__tests__) is not kebab case
+      'unicorn/filename-case': 'off',
       // Tests often use mocks with empty implementations
       '@typescript-eslint/no-empty-function': 'off',
       // React Testing Library patterns
