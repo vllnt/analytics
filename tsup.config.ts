@@ -7,10 +7,11 @@ const USE_CLIENT = '"use client";';
 type TsupPlugin = NonNullable<Options["plugins"]>[number];
 
 /**
- * tsup's CommonJS splitting step inserts helper functions before the code,
- * so a `"use client"` directive from the source ends up after them and is no
- * longer a directive. This moves it back to the start of each CommonJS file
- * that contains it. ESM output already keeps it first.
+ * tsup's CommonJS splitting step inserts helper functions on the first line,
+ * before the code, so a `"use client"` directive from the source ends up after
+ * them and is no longer a directive. This moves it back to the start of each
+ * CommonJS file whose first line has it. ESM output already keeps it first.
+ * No newline is added, so line numbers do not shift.
  */
 const hoistUseClientInCjs: TsupPlugin = {
   async buildEnd({ writtenFiles }) {
@@ -18,8 +19,13 @@ const hoistUseClientInCjs: TsupPlugin = {
     for (const { name } of writtenFiles) {
       if (!name.endsWith(".cjs")) continue;
       const code = await readFile(name, "utf8");
-      if (!code.includes(USE_CLIENT) || code.startsWith(USE_CLIENT)) continue;
-      await writeFile(name, `${USE_CLIENT}\n${code.replace(USE_CLIENT, "")}`);
+      const firstLine = code.split("\n", 1)[0] ?? "";
+      const at = firstLine.indexOf(USE_CLIENT);
+      if (at <= 0) continue;
+      await writeFile(
+        name,
+        USE_CLIENT + code.slice(0, at) + code.slice(at + USE_CLIENT.length),
+      );
     }
   },
   name: "hoist-use-client-in-cjs",
