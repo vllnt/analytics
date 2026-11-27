@@ -11,6 +11,7 @@ It has no transport: events are never sent anywhere. `track()` only calls `conso
 ## Commands
 
 Node is pinned in `.node-version` (24.22.1) and pnpm in `package.json` (`packageManager`).
+pnpm settings (release-age policy, overrides, build-script policy) live in `pnpm-workspace.yaml`.
 
 ```bash
 pnpm install --frozen-lockfile
