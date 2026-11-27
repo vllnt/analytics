@@ -222,6 +222,10 @@ describe("consent", () => {
       expect(typeof consent.timestamp).toBe("string");
     });
 
+    it("records the consent version it is given", () => {
+      expect(createAcceptAllConsent(3).version).toBe(3);
+    });
+
     it("uses ISO timestamp format", () => {
       const consent = createAcceptAllConsent();
       expect(consent.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
@@ -235,6 +239,10 @@ describe("consent", () => {
       expect(consent.analytics).toBe(false);
       expect(consent.functional).toBe(true); // Always enabled
       expect(consent.version).toBe(CONSENT_VERSION);
+    });
+
+    it("records the consent version it is given", () => {
+      expect(createDeclineAnalyticsConsent(3).version).toBe(3);
     });
   });
 

@@ -98,26 +98,34 @@ export function clearConsent(): void {
 }
 
 /**
- * Create a new consent state with all categories accepted
+ * Create a new consent state with all categories accepted.
+ * @param version - consent version to record; pass the `consentVersion` you
+ * check with `needsRePrompt` (default `CONSENT_VERSION`)
  */
-export function createAcceptAllConsent(): ConsentState {
+export function createAcceptAllConsent(
+  version: number = CONSENT_VERSION,
+): ConsentState {
   return {
     analytics: true,
     functional: true,
     timestamp: new Date().toISOString(),
-    version: CONSENT_VERSION,
+    version,
   };
 }
 
 /**
- * Create a consent state with analytics declined
+ * Create a consent state with analytics declined.
+ * @param version - consent version to record; pass the `consentVersion` you
+ * check with `needsRePrompt` (default `CONSENT_VERSION`)
  */
-export function createDeclineAnalyticsConsent(): ConsentState {
+export function createDeclineAnalyticsConsent(
+  version: number = CONSENT_VERSION,
+): ConsentState {
   return {
     analytics: false,
     functional: true, // Functional always enabled
     timestamp: new Date().toISOString(),
-    version: CONSENT_VERSION,
+    version,
   };
 }
 
