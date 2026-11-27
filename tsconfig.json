@@ -1,6 +1,9 @@
 {
   "extends": "@vllnt/typescript/react.json",
   "compilerOptions": {
+    // The public types declare optional keys without `| undefined`. Adopting
+    // this flag would change the published declarations, so it stays off.
+    "exactOptionalPropertyTypes": false,
     "paths": {
       "@/*": ["./src/*"]
     }
