@@ -24,17 +24,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   ignores an empty or non-string user id, instead of recording them.
 - **Breaking:** after a stored decline, `AnalyticsProvider` now blocks tracking with
   `disableAnalytics()`, so `track()` calls are dropped. Before, they were queued in memory without
-  limit and sent if the user accepted later.
+  limit and flushed if the user accepted later.
 - **Breaking:** when `initAnalytics()` is blocked by Do Not Track or a stored decline, it drops the
-  events queued before it, as `disableAnalytics()` does. Before, they were kept and sent by a
+  events queued before it, as `disableAnalytics()` does. Before, they were kept and flushed by a
   later successful `enableAnalytics()` (after the user accepted, or Do Not Track was turned off).
 
 ### Fixed
 
 - `getConsentFromCookie()` no longer matches look-alike cookie names that merely end with
   `vllnt-consent` (for example `evil-vllnt-consent=1`).
-- `AnalyticsProvider` and `useConsent` save each choice with their `consentVersion`. Before, they
-  always saved version `1`, so a `consentVersion` above `1` asked the user again on every visit.
+- In `AnalyticsProvider` and `useConsent`, `acceptAll` and `declineAnalytics` save the choice with
+  their `consentVersion`; `updateConsent` keeps the stored version. Before, they always saved
+  version `1`, so a `consentVersion` above `1` asked the user again on every visit.
 
 ### Security
 
