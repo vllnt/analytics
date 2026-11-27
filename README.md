@@ -36,7 +36,7 @@ import type { ReactNode } from "react";
 import { AnalyticsProvider } from "@vllnt/analytics/react";
 
 // Keep config stable: an inline object re-runs the init effect and re-renders every consumer.
-// Config changes after analytics has started are ignored.
+// Config changes are ignored while analytics is running (initAnalytics returns once started).
 const config = { app: "my-app", version: 1, debug: true };
 
 function App({ children }: { children: ReactNode }) {
