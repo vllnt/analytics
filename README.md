@@ -179,8 +179,8 @@ Full reference with signatures and examples: [`docs/API.md`](docs/API.md).
 | `loadConsent()`                                 | Load consent from localStorage           |
 | `saveConsent(state)`                            | Persist consent to localStorage + cookie |
 | `clearConsent()`                                | Remove consent (triggers re-prompt)      |
-| `createAcceptAllConsent()`                      | Create accept-all consent state          |
-| `createDeclineAnalyticsConsent()`               | Create analytics-declined state          |
+| `createAcceptAllConsent(version?)`              | Create accept-all consent state          |
+| `createDeclineAnalyticsConsent(version?)`       | Create analytics-declined state          |
 | `updateConsentCategory(state, category, value)` | Update a single category                 |
 | `needsRePrompt(consent, version)`               | Check if version requires re-prompt      |
 | `getConsentFromCookie(cookieString)`            | Parse consent from cookie (SSR)          |
@@ -205,11 +205,13 @@ AnalyticsProvider mounts
   │    ├─ DNT enabled? ──▶ Block tracking
   │    └─ Otherwise ──▶ Start & flush queue
   │
-  └─ Declined or no consent ──▶ No init; track() calls stay queued in memory
-                                 (declineAnalytics() blocks and empties the queue)
+  ├─ Analytics declined ──▶ disableAnalytics(); track() calls are dropped
+  │
+  └─ No consent yet ──▶ No init; track() calls are queued in memory
 ```
 
-Events fired before initialization are queued and flushed once consent is granted and analytics initializes.
+Events fired before the user responds are queued and flushed once consent is granted and
+analytics initializes. A decline, or an init blocked by Do Not Track, drops them.
 
 ## Scripts
 

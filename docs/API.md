@@ -35,7 +35,8 @@ starts the process-wide instance, so call it only in the browser.
 
 Starts the shared analytics instance and flushes queued events. Later calls do nothing while an
 instance exists. It does not start, and blocks tracking, when Do Not Track is on (`"1"` or
-`"yes"`) or stored consent has `analytics: false`; already queued events are kept, not flushed.
+`"yes"`) or stored consent has `analytics: false`; already queued events are then dropped, so
+they are never sent later.
 With no stored consent it starts, so call it only after the user accepts if you need opt-in
 (`AnalyticsProvider` does this for you). Once tracking is blocked (by a blocked init or by
 `disableAnalytics`), calling `initAnalytics` again does not unblock it; only `enableAnalytics`
@@ -181,20 +182,22 @@ Removes stored consent and expires the cookie.
 clearConsent();
 ```
 
-### `createAcceptAllConsent(): ConsentState`
+### `createAcceptAllConsent(version?: number): ConsentState`
 
-New state with `analytics: true`, `functional: true`, the current time and `CONSENT_VERSION`.
+New state with `analytics: true`, `functional: true`, the current time and `version` (default
+`CONSENT_VERSION`). Pass the version you check with `needsRePrompt`.
 
 ```ts
-const accepted = createAcceptAllConsent();
+const accepted = createAcceptAllConsent(2);
 ```
 
-### `createDeclineAnalyticsConsent(): ConsentState`
+### `createDeclineAnalyticsConsent(version?: number): ConsentState`
 
-New state with `analytics: false`, `functional: true`, the current time and `CONSENT_VERSION`.
+New state with `analytics: false`, `functional: true`, the current time and `version` (default
+`CONSENT_VERSION`).
 
 ```ts
-const declined = createDeclineAnalyticsConsent();
+const declined = createDeclineAnalyticsConsent(2);
 ```
 
 ### `updateConsentCategory(current: ConsentState, category: ConsentCategory, value: boolean): ConsentState`
@@ -252,7 +255,8 @@ if (isValidConsentState(parsed)) saveConsent(parsed);
 
 ## React (`@vllnt/analytics/react`)
 
-The ESM build (`dist/react.js`) starts with `"use client"`.
+Both builds of this entry (`dist/react.js` and `dist/react.cjs`) start with `"use client"`; the
+core entry does not.
 
 Both `AnalyticsProvider` and `useConsent` read stored consent during the first render. On the
 server that read returns `null`, so `consent` is `null` and `hasResponded` is `false` there, while
@@ -269,14 +273,13 @@ function AnalyticsProvider(props: {
 }): React.JSX.Element;
 ```
 
-Reads stored consent, clears it when `needsRePrompt(stored, consentVersion)`, and calls
-`initAnalytics(config)` while consent has `analytics: true`. Its context actions save consent and
-call `enableAnalytics` or `disableAnalytics`. Pass a stable `config` (for example a module
-constant), because the init effect depends on it.
-
-With stored `analytics: false`, the provider does not call `initAnalytics`, so tracking is not
-blocked after a reload: `track()` calls are queued in memory and are flushed if the user accepts
-later. Call `disableAnalytics()` yourself if events from a declined visitor must be dropped.
+Reads stored consent, clears it when `needsRePrompt(stored, consentVersion)`, calls
+`initAnalytics(config)` while consent has `analytics: true`, and calls `disableAnalytics()` while
+it has `analytics: false`, so after a stored decline `track()` calls are dropped, not queued. Its
+context actions save consent with `consentVersion` and call `enableAnalytics` or
+`disableAnalytics`. Before the user responds (no stored consent), events are queued in memory and
+flushed if the user accepts. Pass a stable `config` (for example a module constant), because the
+init effect depends on it.
 
 ```tsx
 const config = { app: "my-app", version: 1 };
@@ -323,12 +326,10 @@ const { consent, updateConsent } = useConsent({ consentVersion: 1 });
 
 Re-export of the core `initAnalytics`, for apps that only import from `./react`.
 
-### Consent version caveat
+### Consent versions
 
-`createAcceptAllConsent()` and `createDeclineAnalyticsConsent()` always write
-`CONSENT_VERSION` (`1`), and the hooks use them. With `consentVersion` above `1`, the stored
-consent is older than the requested version on every mount, so it is cleared and the user is
-asked again each visit.
+`AnalyticsProvider` and `useConsent` save each choice with their `consentVersion`. Raising
+`consentVersion` asks every visitor once more; the new choice is then kept on later visits.
 
 ## Types (`@vllnt/analytics`)
 
