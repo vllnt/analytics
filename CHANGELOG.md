@@ -10,9 +10,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - The package ships version-matched docs for coding agents and other readers: `docs/API.md`
-  (every public export with its signature and an example), `llms.txt`, `CHANGELOG.md` and the
-  TypeScript sources in `src/` (tests excluded). `llms.txt` links to these bundled files with
-  relative paths.
+  (every public export with its signature and an example), `llms.txt` and `CHANGELOG.md`.
+  `llms.txt` links to these files and to the TypeScript sources in `src/`, which still ship.
 
 ### Changed
 
@@ -28,7 +27,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   limit and sent if the user accepted later.
 - **Breaking:** when `initAnalytics()` is blocked by Do Not Track or a stored decline, it drops the
   events queued before it, as `disableAnalytics()` does. Before, they were kept and sent by a
-  later `enableAnalytics()`.
+  later successful `enableAnalytics()` (after the user accepted, or Do Not Track was turned off).
 
 ### Fixed
 
