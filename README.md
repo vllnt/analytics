@@ -179,8 +179,8 @@ Full reference with signatures and examples: [`docs/API.md`](docs/API.md).
 | `loadConsent()`                                 | Load consent from localStorage           |
 | `saveConsent(state)`                            | Persist consent to localStorage + cookie |
 | `clearConsent()`                                | Remove consent (triggers re-prompt)      |
-| `createAcceptAllConsent(version?)`              | Create accept-all consent state          |
-| `createDeclineAnalyticsConsent(version?)`       | Create analytics-declined state          |
+| `createAcceptAllConsent()`                      | Create accept-all consent state          |
+| `createDeclineAnalyticsConsent()`               | Create analytics-declined state          |
 | `updateConsentCategory(state, category, value)` | Update a single category                 |
 | `needsRePrompt(consent, version)`               | Check if version requires re-prompt      |
 | `getConsentFromCookie(cookieString)`            | Parse consent from cookie (SSR)          |

@@ -182,22 +182,21 @@ Removes stored consent and expires the cookie.
 clearConsent();
 ```
 
-### `createAcceptAllConsent(version?: number): ConsentState`
+### `createAcceptAllConsent(): ConsentState`
 
-New state with `analytics: true`, `functional: true`, the current time and `version` (default
-`CONSENT_VERSION`). Pass the version you check with `needsRePrompt`.
+New state with `analytics: true`, `functional: true`, the current time and `CONSENT_VERSION`. To
+record another version, override it: `{ ...createAcceptAllConsent(), version: 2 }`.
 
 ```ts
-const accepted = createAcceptAllConsent(2);
+const accepted = createAcceptAllConsent();
 ```
 
-### `createDeclineAnalyticsConsent(version?: number): ConsentState`
+### `createDeclineAnalyticsConsent(): ConsentState`
 
-New state with `analytics: false`, `functional: true`, the current time and `version` (default
-`CONSENT_VERSION`).
+New state with `analytics: false`, `functional: true`, the current time and `CONSENT_VERSION`.
 
 ```ts
-const declined = createDeclineAnalyticsConsent(2);
+const declined = createDeclineAnalyticsConsent();
 ```
 
 ### `updateConsentCategory(current: ConsentState, category: ConsentCategory, value: boolean): ConsentState`

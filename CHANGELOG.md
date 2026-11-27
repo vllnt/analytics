@@ -13,8 +13,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (every public export with its signature and an example), `llms.txt`, `CHANGELOG.md` and the
   TypeScript sources in `src/` (tests excluded). `llms.txt` links to these bundled files with
   relative paths.
-- `createAcceptAllConsent()` and `createDeclineAnalyticsConsent()` take an optional consent
-  `version` (default `CONSENT_VERSION`).
 
 ### Changed
 
@@ -22,12 +20,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   declarations) instead of raw TypeScript sources, so it works without transpiling
   `node_modules`. The `.` and `./react` export subpaths and the `react` peer range are
   unchanged. `./package.json` is now exported too.
-- `track()` ignores events whose name is empty or not a string, and `identify()` ignores an empty
+- **Breaking:** `track()` ignores events whose name is empty or not a string, and `identify()` ignores an empty
   or non-string user id, instead of recording them.
-- After a stored decline, `AnalyticsProvider` now blocks tracking with `disableAnalytics()`, so
+- **Breaking:** after a stored decline, `AnalyticsProvider` now blocks tracking with `disableAnalytics()`, so
   `track()` calls are dropped. Before, they were queued in memory without limit and sent if the
   user accepted later.
-- When `initAnalytics()` is blocked by Do Not Track or a stored decline, it drops the events
+- **Breaking:** when `initAnalytics()` is blocked by Do Not Track or a stored decline, it drops the events
   queued before it, as `disableAnalytics()` does. Before, they were kept and sent by a later
   `enableAnalytics()`.
 
@@ -42,8 +40,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
-- Releases are published from CI with npm trusted publishing and provenance. `@latest` is published
-  only from a `vX.Y.Z` tag on `main` that matches `package.json` and this changelog.
+- Releases are published from CI with npm trusted publishing (OIDC), so no npm token is stored, and
+  keep their provenance attestation. `@latest` is published only from a `vX.Y.Z` tag on `main` that
+  matches `package.json` and this changelog.
 
 ## [0.1.1] - 2026-03-10
 
