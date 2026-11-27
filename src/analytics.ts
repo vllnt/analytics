@@ -66,7 +66,9 @@ function sendEvent(name: string, properties?: Record<string, unknown>): void {
 }
 
 /**
- * Initialize analytics with configuration
+ * Start the shared analytics instance and send queued events. Blocks tracking,
+ * and drops the queue, when Do Not Track is on or stored consent declines it.
+ * @see https://oss.vllnt.com/packages/analytics
  */
 export function initAnalytics(config: AnalyticsConfig): void {
   if (analyticsState) return;
