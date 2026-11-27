@@ -21,6 +21,12 @@ Peer dependency: `react ^18.0.0 || ^19.0.0`
 
 Ships ESM and CommonJS builds with type declarations; no bundler transpilation of `node_modules` is needed.
 
+## For coding agents
+
+The docs are bundled in the package at `node_modules/@vllnt/analytics/docs/` ([`docs/API.md`](docs/API.md)), together with
+[`llms.txt`](llms.txt), `CHANGELOG.md` and the TypeScript sources in `src/`. They match the installed
+version. Read them before writing code.
+
 ## Usage
 
 ### React Provider
@@ -40,10 +46,11 @@ function App() {
 ### Consent Banner
 
 ```tsx
-import { useConsent } from "@vllnt/analytics/react";
+import { useAnalytics } from "@vllnt/analytics/react";
 
+// Render inside <AnalyticsProvider> so accepting starts tracking.
 function CookieBanner() {
-  const { hasResponded, isLoading, acceptAll, declineAnalytics } = useConsent();
+  const { hasResponded, isLoading, acceptAll, declineAnalytics } = useAnalytics();
 
   if (isLoading || hasResponded) return null;
 
@@ -56,6 +63,9 @@ function CookieBanner() {
   );
 }
 ```
+
+`useConsent()` exposes the same consent fields without a provider, but it only reads and writes
+stored consent: it does not start or stop analytics.
 
 ### Track Events
 
@@ -127,7 +137,7 @@ import {
 } from "@vllnt/analytics";
 
 // SSR: read consent from cookie header
-const analyticsAllowed = getConsentFromCookie(request.headers.cookie);
+const analyticsAllowed = getConsentFromCookie(request.headers.get("cookie") ?? "");
 
 // Check if re-prompt needed after version bump
 const consent = loadConsent();
@@ -137,6 +147,8 @@ if (consent && needsRePrompt(consent, 2)) {
 ```
 
 ## API
+
+Full reference with signatures and examples: [`docs/API.md`](docs/API.md).
 
 ### Core
 
@@ -202,6 +214,19 @@ pnpm typecheck     # Type-check
 pnpm build         # Build dist (ESM, CJS, types)
 ```
 
+## Related packages
+
+- [`@vllnt/convex-analytics`](https://www.npmjs.com/package/@vllnt/convex-analytics): a Convex
+  component that stores events and serves rollups, funnels and retention. Use it as the backend if
+  your app runs on Convex; this package does not send events to it for you.
+- [`@vllnt/convex-consent`](https://www.npmjs.com/package/@vllnt/convex-consent): an append-only
+  consent ledger stored in Convex. Use it when you need a server-side record of consent per
+  subject and purpose; this package only keeps the visitor's choice in the browser.
+
 ## License
 
 [MIT](LICENSE)
+
+---
+
+Part of vllnt oss: https://oss.vllnt.com

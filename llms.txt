@@ -5,9 +5,16 @@
 Facts for AI tools. The library has no transport: it queues and gates events, and only
 `console.log`s them when `debug: true`. Bring your own backend.
 
+## For coding agents
+
+The docs are bundled in the package at `node_modules/@vllnt/analytics/docs/`, with this file,
+`CHANGELOG.md` and the TypeScript sources in `src/`. They match the installed version. Read them
+before writing code.
+
 ## Package
 
 - npm: `@vllnt/analytics` (MIT), repo: https://github.com/vllnt/analytics
+- Unreleased builds from `main` use the `canary` dist-tag
 - Ships ESM, CommonJS and type declarations from `dist` (built with tsup)
 - Entry points: `@vllnt/analytics` (core + consent + types), `@vllnt/analytics/react` (`AnalyticsProvider`, `useAnalytics`, `useConsent`, `initAnalytics`)
 - Peer dependency: React `^18.0.0 || ^19.0.0`
@@ -17,6 +24,8 @@ Facts for AI tools. The library has no transport: it queues and gates events, an
 
 - Events tracked before `initAnalytics()` are queued and flushed on init.
 - Blocked when Do Not Track is on (`"1"` or `"yes"`) or stored consent has `analytics: false`.
+  With no stored consent, `initAnalytics()` starts tracking; `AnalyticsProvider` calls it only
+  after the user accepts.
 - Consent is stored in `localStorage` (`vllnt:analytics-consent`) and a `vllnt-consent` cookie
   (`1` or `0`) for SSR; `getConsentFromCookie(cookieString)` reads it with an anchored match.
 - Consent is versioned (`CONSENT_VERSION`); a lower stored version re-prompts.
@@ -25,14 +34,17 @@ Facts for AI tools. The library has no transport: it queues and gates events, an
 
 ## Docs
 
-- README.md: usage and API summary
-- CHANGELOG.md: release history
-- CONTRIBUTING.md: setup, checks, release flow
-- SECURITY.md: private vulnerability reporting
-- AGENTS.md: instructions for coding agents
-- src/index.ts, src/react.tsx: public exports
+- [API reference](./docs/API.md): every public export, signatures, examples, entry points
+- [README](./README.md): usage and API summary
+- [Changelog](./CHANGELOG.md): release history
+- [Core exports](./src/index.ts) and [React exports](./src/react.tsx): source of the public API
 
-## Develop
+## Optional
 
-Node per `.node-version`, pnpm per `packageManager`:
-`pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build`
+- [Contributing](https://github.com/vllnt/analytics/blob/main/CONTRIBUTING.md): setup, checks, release flow
+- [Security policy](https://github.com/vllnt/analytics/blob/main/SECURITY.md): private vulnerability reporting
+- [AGENTS.md](https://github.com/vllnt/analytics/blob/main/AGENTS.md): instructions for contributing agents
+
+## Ecosystem
+
+- [vllnt oss](https://oss.vllnt.com/llms.txt): index of all vllnt open-source packages

@@ -12,6 +12,10 @@ on:
     # Not evaluated for tag pushes.
     paths:
       - "src/**"
+      - "docs/**"
+      - "README.md"
+      - "CHANGELOG.md"
+      - "llms.txt"
       - "package.json"
       - "tsup.config.ts"
       - "pnpm-lock.yaml"

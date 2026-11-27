@@ -7,6 +7,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.0] - Unreleased
 
+### Added
+
+- The package ships version-matched docs for coding agents and other readers: `docs/API.md`
+  (every public export with its signature and an example), `llms.txt`, `CHANGELOG.md` and the
+  TypeScript sources in `src/` (tests excluded). `llms.txt` links to these bundled files with
+  relative paths.
+
 ### Changed
 
 - The package now ships compiled output in `dist` (ESM, CommonJS and type declarations) instead of
