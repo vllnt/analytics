@@ -9,17 +9,25 @@
     "type": "git",
     "url": "git+https://github.com/vllnt/analytics.git"
   },
+  "homepage": "https://oss.vllnt.com/packages/analytics",
   "keywords": [
     "analytics",
     "consent",
     "privacy",
     "gdpr",
     "react",
-    "do-not-track"
+    "do-not-track",
+    "cookie-consent",
+    "ssr"
   ],
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "src",
+    "!src/__tests__",
+    "docs/API.md",
+    "CHANGELOG.md",
+    "llms.txt"
   ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

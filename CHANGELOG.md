@@ -7,11 +7,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.0] - Unreleased
 
+### Added
+
+- The package ships version-matched docs for coding agents and other readers: `docs/API.md`
+  (every public export with its signature and an example), `llms.txt`, `CHANGELOG.md` and the
+  TypeScript sources in `src/` (tests excluded). `llms.txt` links to these bundled files with
+  relative paths.
+
 ### Changed
 
-- The package now ships compiled output in `dist` (ESM, CommonJS and type declarations) instead of
-  raw TypeScript sources, so it works without transpiling `node_modules`. The `.` and `./react`
-  export subpaths and the `react` peer range are unchanged. `./package.json` is now exported too.
+- The package entry points now resolve to compiled output in `dist` (ESM, CommonJS and type
+  declarations) instead of raw TypeScript sources, so it works without transpiling
+  `node_modules`. The `.` and `./react` export subpaths and the `react` peer range are
+  unchanged. `./package.json` is now exported too.
 - `track()` ignores events whose name is empty or not a string, and `identify()` ignores an empty
   or non-string user id, instead of recording them.
 

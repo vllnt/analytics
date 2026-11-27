@@ -21,16 +21,27 @@ Peer dependency: `react ^18.0.0 || ^19.0.0`
 
 Ships ESM and CommonJS builds with type declarations; no bundler transpilation of `node_modules` is needed.
 
+## For coding agents
+
+The docs are bundled in the package at `node_modules/@vllnt/analytics/docs/` ([`docs/API.md`](docs/API.md)), together with
+[`llms.txt`](llms.txt), `CHANGELOG.md` and the TypeScript sources in `src/`. They match the installed
+version. Read them before writing code.
+
 ## Usage
 
 ### React Provider
 
 ```tsx
+import type { ReactNode } from "react";
 import { AnalyticsProvider } from "@vllnt/analytics/react";
 
-function App() {
+// Keep config stable: an inline object re-runs the init effect and re-renders every consumer.
+// Config changes are ignored while analytics is running (initAnalytics returns once started).
+const config = { app: "my-app", version: 1, debug: true };
+
+function App({ children }: { children: ReactNode }) {
   return (
-    <AnalyticsProvider config={{ app: "my-app", version: 1, debug: true }}>
+    <AnalyticsProvider config={config}>
       {children}
     </AnalyticsProvider>
   );
@@ -40,12 +51,17 @@ function App() {
 ### Consent Banner
 
 ```tsx
-import { useConsent } from "@vllnt/analytics/react";
+import { useEffect, useState } from "react";
+import { useAnalytics } from "@vllnt/analytics/react";
 
+// Render inside <AnalyticsProvider> so accepting starts tracking.
 function CookieBanner() {
-  const { hasResponded, isLoading, acceptAll, declineAnalytics } = useConsent();
+  const { hasResponded, acceptAll, declineAnalytics } = useAnalytics();
+  // Stored consent is read in the browser only; wait for mount to avoid a hydration mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  if (isLoading || hasResponded) return null;
+  if (!mounted || hasResponded) return null;
 
   return (
     <div>
@@ -56,6 +72,9 @@ function CookieBanner() {
   );
 }
 ```
+
+`useConsent()` exposes the same consent fields without a provider, but it only reads and writes
+stored consent: it does not start or stop analytics.
 
 ### Track Events
 
@@ -127,7 +146,7 @@ import {
 } from "@vllnt/analytics";
 
 // SSR: read consent from cookie header
-const analyticsAllowed = getConsentFromCookie(request.headers.cookie);
+const analyticsAllowed = getConsentFromCookie(request.headers.get("cookie") ?? "");
 
 // Check if re-prompt needed after version bump
 const consent = loadConsent();
@@ -137,6 +156,8 @@ if (consent && needsRePrompt(consent, 2)) {
 ```
 
 ## API
+
+Full reference with signatures and examples: [`docs/API.md`](docs/API.md).
 
 ### Core
 
@@ -176,16 +197,16 @@ if (consent && needsRePrompt(consent, 2)) {
 ## How It Works
 
 ```
-User visits site
+AnalyticsProvider mounts
   │
-  ├─ DNT enabled? ──▶ Block all tracking
+  ├─ Stored consent outdated? ──▶ Clear it & re-prompt
   │
-  ├─ Consent exists?
-  │    ├─ Version outdated? ──▶ Clear & re-prompt
-  │    ├─ Analytics declined? ──▶ Block tracking
-  │    └─ Analytics accepted ──▶ Initialize & flush queue
+  ├─ Analytics accepted ──▶ initAnalytics()
+  │    ├─ DNT enabled? ──▶ Block tracking
+  │    └─ Otherwise ──▶ Start & flush queue
   │
-  └─ No consent ──▶ Queue events until user responds
+  └─ Declined or no consent ──▶ No init; track() calls stay queued in memory
+                                 (declineAnalytics() blocks and empties the queue)
 ```
 
 Events fired before initialization are queued and flushed once consent is granted and analytics initializes.
@@ -202,6 +223,19 @@ pnpm typecheck     # Type-check
 pnpm build         # Build dist (ESM, CJS, types)
 ```
 
+## Related packages
+
+- [`@vllnt/convex-analytics`](https://www.npmjs.com/package/@vllnt/convex-analytics): a Convex
+  component that stores events and serves rollups, funnels and retention. Use it as the backend if
+  your app runs on Convex; this package does not send events to it for you.
+- [`@vllnt/convex-consent`](https://www.npmjs.com/package/@vllnt/convex-consent): an append-only
+  consent ledger stored in Convex. Use it when you need a server-side record of consent per
+  subject and purpose; this package only keeps the visitor's choice in the browser.
+
 ## License
 
 [MIT](LICENSE)
+
+---
+
+Part of vllnt oss: https://oss.vllnt.com

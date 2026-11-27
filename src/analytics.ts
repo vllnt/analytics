@@ -49,18 +49,11 @@ function debugLog(type: string, data: unknown): void {
 }
 
 /**
- * Send event to analytics endpoint or external service
- * This is where you'd integrate with Vercel Analytics, GA, etc.
+ * Central tracking point. The library has no transport: events are only
+ * logged in debug mode and are not sent anywhere.
  */
 function sendEvent(name: string, properties?: Record<string, unknown>): void {
   debugLog("track", { name, properties });
-
-  // Integration point: Forward to Vercel Analytics or other services
-  // Vercel Analytics integration is handled by the React provider
-  // This function serves as the central tracking point
-
-  // For custom backends, you could send to an API endpoint:
-  // fetch('/api/analytics', { method: 'POST', body: JSON.stringify({ name, properties }) })
 }
 
 /**
