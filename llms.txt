@@ -1,15 +1,23 @@
 # @vllnt/analytics
 
-> Lightweight, privacy-first analytics with consent management and React integration.
+> Cookie consent state and consent-gated event tracking for React and TypeScript, with Do Not Track and an SSR consent cookie.
 
 Facts for AI tools. The library has no transport: it queues and gates events, and only
-`console.log`s them when `debug: true`. Bring your own backend.
+`console.log`s them when `debug: true`. Events never leave the page.
 
 ## For coding agents
 
 The docs are bundled in the package at `node_modules/@vllnt/analytics/docs/`, with this file,
 `CHANGELOG.md` and the TypeScript sources in `src/`. They match the installed version. Read them
 before writing code.
+
+## When to use
+
+- Use it when a React app needs cookie-banner state stored in `localStorage` and a cookie.
+- Use it when tracking calls must wait for consent and stop on Do Not Track or a decline.
+- Use it when server code must read the visitor's choice from the `Cookie` header.
+- Do not use it when events must reach a backend: it sends nothing; use your analytics vendor's SDK.
+- Do not use it for a server-side consent record: use `@vllnt/convex-consent`.
 
 ## Package
 
@@ -24,7 +32,7 @@ before writing code.
 ## Behaviour
 
 - Events tracked before `initAnalytics()` are queued and flushed on the first unblocked init;
-  a blocked init drops them.
+  a blocked init drops them. The queue has no size limit.
 - `initAnalytics()` blocks tracking when Do Not Track is on (`"1"` or `"yes"`) or stored consent
   has `analytics: false`. With no stored consent it starts tracking. `AnalyticsProvider` calls it
   while consent has `analytics: true` and calls `disableAnalytics()` after a stored decline, so a
@@ -37,11 +45,15 @@ before writing code.
 - `track()` ignores empty or non-string names; `identify()` ignores empty or non-string ids.
 - Browser APIs are guarded, so server-side import is safe. `initAnalytics()` has no server
   guard and starts the process-wide instance there, so call it only in the browser.
+- The only thrown error is `useAnalytics must be used within an AnalyticsProvider`; there are no
+  error codes.
 
 ## Docs
 
 - [API reference](./docs/API.md): every public export, signatures, examples, entry points
-- [README](./README.md): usage and API summary
+- [Errors and fixes](./README.md#errors-and-fixes): every message the package throws or logs
+- [Limits and gotchas](./README.md#limits-and-gotchas): defaults and calls that do nothing
+- [README](./README.md): usage, common tasks, compatibility
 - [Changelog](./CHANGELOG.md): release history
 - [Core exports](./src/index.ts) and [React exports](./src/react.tsx): source of the public API
 
@@ -53,4 +65,7 @@ before writing code.
 
 ## Ecosystem
 
-- [vllnt oss](https://oss.vllnt.com/llms.txt): index of all vllnt open-source packages
+- [Package page](https://oss.vllnt.com/packages/analytics)
+- [All @vllnt packages](https://oss.vllnt.com/llms.txt)
+- [vllnt](https://vllnt.com/llms.txt)
+- [Author](https://bntvllnt.com)

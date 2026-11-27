@@ -1,15 +1,19 @@
 # @vllnt/analytics
 
-Lightweight, privacy-first analytics library with consent management and React integration.
+Cookie consent state and consent-gated event tracking for React and TypeScript, with Do Not Track and an SSR consent cookie.
 
-## Features
+## For coding agents
 
-- **Event tracking** with pre-init queuing (no lost events during hydration)
-- **Consent management** — two categories (analytics + functional), localStorage + SSR cookie
-- **Versioned consent** — bump version to re-prompt users
-- **Do Not Track** — respects browser DNT setting
-- **SSR-safe** — all browser APIs guarded
-- **Zero external analytics dependencies** — bring your own backend (Vercel Analytics, GA, custom)
+Version-matched docs ship in the package: [`docs/API.md`](docs/API.md), [`llms.txt`](llms.txt),
+`CHANGELOG.md` and the TypeScript sources in `src/`. Read them before writing code.
+
+## When to use
+
+- Use it when a React app needs cookie-banner state stored in `localStorage` and a cookie.
+- Use it when tracking calls must wait for consent and stop on Do Not Track or a decline.
+- Use it when server code must read the visitor's choice from the `Cookie` header.
+- Do not use it when events must reach a backend: it sends nothing; use your analytics vendor's SDK.
+- Do not use it for a server-side consent record: use [`@vllnt/convex-consent`](https://oss.vllnt.com/packages/convex-consent).
 
 ## Install
 
@@ -17,55 +21,89 @@ Lightweight, privacy-first analytics library with consent management and React i
 pnpm add @vllnt/analytics
 ```
 
-Peer dependency: `react ^18.0.0 || ^19.0.0`
-
-Ships ESM and CommonJS builds with type declarations; no bundler transpilation of `node_modules` is needed.
-
-## For coding agents
-
-The docs are bundled in the package at `node_modules/@vllnt/analytics/docs/` ([`docs/API.md`](docs/API.md)), together with
-[`llms.txt`](llms.txt), `CHANGELOG.md` and the TypeScript sources in `src/`. They match the installed
-version. Read them before writing code.
-
-## Usage
-
-### React Provider
+## Quick start
 
 ```tsx
-import type { ReactNode } from "react";
-import { AnalyticsProvider } from "@vllnt/analytics/react";
+import { track } from "@vllnt/analytics";
+import { AnalyticsProvider, useAnalytics } from "@vllnt/analytics/react";
 
-// Keep config stable: an inline object re-runs the init effect and re-renders every consumer.
-// Config changes are ignored while analytics is running (initAnalytics returns once started).
-const config = { app: "my-app", version: 1, debug: true };
+const config = { app: "my-app" };
 
-function App({ children }: { children: ReactNode }) {
-  return (
-    <AnalyticsProvider config={config}>
-      {children}
-    </AnalyticsProvider>
-  );
+function Banner() {
+  const { hasResponded, acceptAll, declineAnalytics } = useAnalytics();
+  return hasResponded ? null : <p><button onClick={acceptAll}>Accept</button><button onClick={declineAnalytics}>Decline</button></p>;
 }
+
+export const App = () => (
+  <AnalyticsProvider config={config}><Banner /><button onClick={() => track("cta_click")}>Buy</button></AnalyticsProvider>
+);
 ```
 
-### Consent Banner
+## API
+
+Every public export. Full signatures and examples: [`docs/API.md`](docs/API.md).
+
+| Export | Entry | What it does |
+| --- | --- | --- |
+| [`initAnalytics`](docs/API.md#initanalytics) | `.`, `./react` | Starts the shared instance and flushes queued events, unless blocked. |
+| [`track`](docs/API.md#track) | `.` | Records a custom event; queued before init, dropped while blocked. |
+| [`trackPage`](docs/API.md#trackpage) | `.` | Records a page view, queued before init like `track`. |
+| [`identify`](docs/API.md#identify) | `.` | Stores a user id and traits on the started instance. |
+| [`resetAnalytics`](docs/API.md#resetanalytics) | `.` | Clears the user id and traits (logout). |
+| [`enableAnalytics`](docs/API.md#enableanalytics) | `.` | Unblocks after consent is granted and starts again. |
+| [`disableAnalytics`](docs/API.md#disableanalytics) | `.` | Blocks tracking and empties the queue. |
+| [`isAnalyticsEnabled`](docs/API.md#isanalyticsenabled) | `.` | `true` when started and not blocked. |
+| [`getAnalyticsState`](docs/API.md#getanalyticsstate) | `.` | Current instance state, for debugging. |
+| [`trackTutorialStart`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_start`. |
+| [`trackSectionView`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_section_view`. |
+| [`trackSectionComplete`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_section_complete`. |
+| [`trackTutorialComplete`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_complete`. |
+| [`trackTutorialNavigation`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_navigation`. |
+| [`trackTimeSpent`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_time_spent`. |
+| [`CONSENT_VERSION`](docs/API.md#constants) | `.` | Default consent version, `1`. |
+| [`CONSENT_STORAGE_KEY`](docs/API.md#constants) | `.` | `localStorage` key, `"vllnt:analytics-consent"`. |
+| [`CONSENT_COOKIE_NAME`](docs/API.md#constants) | `.` | Cookie name, `"vllnt-consent"`. |
+| [`loadConsent`](docs/API.md#loadconsent) | `.` | Reads and validates stored consent, or `null`. |
+| [`saveConsent`](docs/API.md#saveconsent) | `.` | Writes consent to `localStorage` and the cookie. |
+| [`clearConsent`](docs/API.md#clearconsent) | `.` | Removes stored consent and expires the cookie. |
+| [`createAcceptAllConsent`](docs/API.md#createacceptallconsent) | `.` | New consent state with everything accepted. |
+| [`createDeclineAnalyticsConsent`](docs/API.md#createdeclineanalyticsconsent) | `.` | New consent state with analytics declined. |
+| [`updateConsentCategory`](docs/API.md#updateconsentcategory) | `.` | Copy of a consent state with one category changed. |
+| [`needsRePrompt`](docs/API.md#needsreprompt) | `.` | `true` when stored consent is older than a version. |
+| [`getConsentFromCookie`](docs/API.md#getconsentfromcookie) | `.` | Parses the consent cookie from a `Cookie` header. |
+| [`isDoNotTrackEnabled`](docs/API.md#isdonottrackenabled) | `.` | `true` when the browser sends Do Not Track. |
+| [`isStorageAvailable`](docs/API.md#isstorageavailable) | `.` | `true` when `localStorage` can be written. |
+| [`isValidConsentState`](docs/API.md#isvalidconsentstate) | `.` | Type guard for a stored consent object. |
+| [`AnalyticsProvider`](docs/API.md#analyticsprovider) | `./react` | Context provider that wires consent to tracking. |
+| [`useAnalytics`](docs/API.md#useanalytics) | `./react` | Provider context: consent state and actions. |
+| [`useConsent`](docs/API.md#useconsent) | `./react` | Standalone consent state; does not start tracking. |
+| [`AnalyticsConfig`](docs/API.md#types) | `.` (type) | `{ app; debug?; version? }`. |
+| [`AnalyticsEvent`](docs/API.md#types) | `.` (type) | A queued event: name, properties, timestamp. |
+| [`ConsentCategory`](docs/API.md#types) | `.` (type) | `"analytics" \| "functional"`. |
+| [`ConsentState`](docs/API.md#types) | `.` (type) | Stored consent: categories, timestamp, version. |
+| [`TutorialEventName`](docs/API.md#types) | `.` (type) | Event names sent by the tutorial helpers. |
+| [`TutorialEventProperties`](docs/API.md#types) | `.` (type) | Properties for the tutorial helpers. |
+| [`UseConsentOptions`](docs/API.md#types) | `.` (type) | `{ consentVersion? }`. |
+| [`UseConsentReturn`](docs/API.md#types) | `.` (type) | Return value of `useConsent`. |
+
+## Common tasks
+
+### Show the banner only after mount
+
+Stored consent is read in the browser only, so on the server `hasResponded` is `false`. Render the
+banner after mount to avoid a hydration mismatch.
 
 ```tsx
 import { useEffect, useState } from "react";
 import { useAnalytics } from "@vllnt/analytics/react";
 
-// Render inside <AnalyticsProvider> so accepting starts tracking.
-function CookieBanner() {
+export function CookieBanner() {
   const { hasResponded, acceptAll, declineAnalytics } = useAnalytics();
-  // Stored consent is read in the browser only; wait for mount to avoid a hydration mismatch.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-
   if (!mounted || hasResponded) return null;
-
   return (
     <div>
-      <p>We use cookies for analytics.</p>
       <button onClick={acceptAll}>Accept</button>
       <button onClick={declineAnalytics}>Decline</button>
     </div>
@@ -73,41 +111,69 @@ function CookieBanner() {
 }
 ```
 
-`useConsent()` exposes the same consent fields without a provider, but it only reads and writes
-stored consent: it does not start or stop analytics.
+### Read consent on the server
 
-### Track Events
+```ts
+import { getConsentFromCookie } from "@vllnt/analytics";
 
-```tsx
-import { track, trackPage } from "@vllnt/analytics";
-
-// Generic event
-track("button_click", { id: "cta-hero" });
-
-// Page view
-trackPage({ path: "/about" });
+export function GET(request: Request): Response {
+  const allowed = getConsentFromCookie(request.headers.get("cookie") ?? "");
+  return Response.json({ allowed });
+}
 ```
 
-### Tutorial Tracking
+### Ask every visitor again after a policy change
 
-Typed helpers for tutorial/content flows:
+Raise `consentVersion`. Stored choices with a lower version are cleared once; new choices are saved
+with the new version.
 
 ```tsx
-import {
-  trackTutorialStart,
-  trackSectionView,
-  trackSectionComplete,
-  trackTutorialComplete,
-  trackTutorialNavigation,
-  trackTimeSpent,
-} from "@vllnt/analytics";
+import type { ReactNode } from "react";
+import { AnalyticsProvider } from "@vllnt/analytics/react";
 
-trackTutorialStart({
-  tutorial_id: "getting-started",
-  tutorial_title: "Getting Started",
-  locale: "en",
-  total_sections: 5,
-});
+const config = { app: "my-app" };
+
+export function Root({ children }: { children: ReactNode }) {
+  return (
+    <AnalyticsProvider config={config} consentVersion={2}>
+      {children}
+    </AnalyticsProvider>
+  );
+}
+```
+
+### Let the visitor change their choice later
+
+```tsx
+import { useAnalytics } from "@vllnt/analytics/react";
+
+export function PrivacySettings() {
+  const { consent, updateConsent, resetConsent } = useAnalytics();
+  return (
+    <div>
+      <label>
+        <input
+          type="checkbox"
+          checked={consent?.analytics ?? false}
+          onChange={(event) => updateConsent("analytics", event.target.checked)}
+        />
+        Analytics
+      </label>
+      <button onClick={resetConsent}>Ask me again</button>
+    </div>
+  );
+}
+```
+
+### Track page views, users and tutorials
+
+```ts
+import { identify, resetAnalytics, trackPage, trackSectionView } from "@vllnt/analytics";
+
+trackPage({ path: "/about" });
+
+identify("user-123", { plan: "pro" });
+resetAnalytics();
 
 trackSectionView({
   tutorial_id: "getting-started",
@@ -119,120 +185,117 @@ trackSectionView({
 });
 ```
 
-### Identify Users
-
-```tsx
-import { identify, resetAnalytics } from "@vllnt/analytics";
-
-// After login
-identify("user-123", { plan: "pro" });
-
-// After logout
-resetAnalytics();
-```
-
-### Consent Utilities (non-React)
+### Use it without React
 
 ```ts
 import {
-  loadConsent,
-  saveConsent,
-  clearConsent,
   createAcceptAllConsent,
   createDeclineAnalyticsConsent,
-  getConsentFromCookie,
-  isDoNotTrackEnabled,
-  needsRePrompt,
+  disableAnalytics,
+  enableAnalytics,
+  initAnalytics,
+  loadConsent,
+  saveConsent,
 } from "@vllnt/analytics";
 
-// SSR: read consent from cookie header
-const analyticsAllowed = getConsentFromCookie(request.headers.get("cookie") ?? "");
+const config = { app: "my-app" };
 
-// Check if re-prompt needed after version bump
-const consent = loadConsent();
-if (consent && needsRePrompt(consent, 2)) {
-  clearConsent();
+if (loadConsent()?.analytics) initAnalytics(config);
+
+export function onAccept(): void {
+  saveConsent(createAcceptAllConsent());
+  enableAnalytics(config);
+  initAnalytics(config);
+}
+
+export function onDecline(): void {
+  saveConsent(createDeclineAnalyticsConsent());
+  disableAnalytics();
 }
 ```
 
-## API
+## Errors and fixes
 
-Full reference with signatures and examples: [`docs/API.md`](docs/API.md).
+The package has no error codes. These are every message it throws or logs as a warning.
 
-### Core
+| Message | Kind | Cause | Fix |
+| --- | --- | --- | --- |
+| `useAnalytics must be used within an AnalyticsProvider` | thrown by `useAnalytics()` | The hook ran outside `<AnalyticsProvider>`. | Render the component inside `<AnalyticsProvider>`, or use `useConsent()`. |
+| `Failed to save consent:` | `console.warn` from `saveConsent()` | Writing `localStorage` or the cookie threw, for example a full quota. | The choice may not be stored, so the visitor can be asked again on the next visit. Free storage, or accept that. |
 
-| Function                    | Description                                    |
-| --------------------------- | ---------------------------------------------- |
-| `initAnalytics(config)`     | Initialize analytics singleton                 |
-| `track(name, properties?)`  | Track a custom event (empty names are ignored) |
-| `trackPage(properties?)`    | Track a page view                              |
-| `identify(userId, traits?)` | Identify a user (empty ids are ignored)        |
-| `resetAnalytics()`          | Clear user identity (logout)                   |
-| `enableAnalytics(config)`   | Re-enable after consent granted                |
-| `disableAnalytics()`        | Disable after consent revoked                  |
-| `isAnalyticsEnabled()`      | Check if tracking is active                    |
+## Limits and gotchas
 
-### Consent
+- No transport and no event callback: events never leave the page. With `debug: true` they are
+  logged with `console.log` as `[analytics:track]`, `[analytics:page]` and similar.
+- Before the visitor responds, `track()` and `trackPage()` are queued in memory with no size
+  limit. The first unblocked `initAnalytics()` sends them; a decline or a Do Not Track block drops
+  them.
+- `identify()` before init or while blocked does nothing; it is not queued.
+- `track()` with an empty or non-string name and `identify()` with an empty or non-string id do
+  nothing.
+- `initAnalytics()` runs once: later calls, and later `config` values, are ignored while an
+  instance exists. Pass a stable `config` (a module constant) to `AnalyticsProvider`.
+- Once blocked, only `enableAnalytics()` unblocks. It re-reads stored consent, so save the accepted
+  consent first, and it does nothing while Do Not Track (`"1"` or `"yes"`) is on.
+- `disableAnalytics()` keeps the user id and traits; call `resetAnalytics()` to clear them.
+- On the server, `track`, `trackPage`, `identify` and `resetAnalytics` do nothing and `loadConsent`
+  returns `null`. `initAnalytics` has no server guard: call it only in the browser.
+- When `localStorage` is unavailable, `saveConsent` and `clearConsent` do nothing, so the choice
+  lasts for the current page only.
+- `updateConsent("functional", false)` is ignored: functional consent is always on.
+  `updateConsent` does nothing while `consent` is `null`.
+- `useConsent()` reads and writes stored consent only; it does not start or stop tracking and does
+  not share state with `AnalyticsProvider`.
+- `isLoading` is always `false`.
+- The cookie is `vllnt-consent=1` or `vllnt-consent=0`, with a one-year expiry, `path=/` and
+  `SameSite=Lax`, and without `Secure` or `HttpOnly`.
 
-| Function                                        | Description                              |
-| ----------------------------------------------- | ---------------------------------------- |
-| `loadConsent()`                                 | Load consent from localStorage           |
-| `saveConsent(state)`                            | Persist consent to localStorage + cookie |
-| `clearConsent()`                                | Remove consent (triggers re-prompt)      |
-| `createAcceptAllConsent()`                      | Create accept-all consent state          |
-| `createDeclineAnalyticsConsent()`               | Create analytics-declined state          |
-| `updateConsentCategory(state, category, value)` | Update a single category                 |
-| `needsRePrompt(consent, version)`               | Check if version requires re-prompt      |
-| `getConsentFromCookie(cookieString)`            | Parse consent from cookie (SSR)          |
-| `isDoNotTrackEnabled()`                         | Check browser DNT setting                |
-
-### React (`@vllnt/analytics/react`)
-
-| Export                 | Description                                       |
-| ---------------------- | ------------------------------------------------- |
-| `AnalyticsProvider`    | Context provider — wires consent + analytics init |
-| `useAnalytics()`       | Access full analytics context                     |
-| `useConsent(options?)` | Standalone consent hook for banner UIs            |
-
-## How It Works
-
-```
+```text
 AnalyticsProvider mounts
-  │
-  ├─ Stored consent outdated? ──▶ Clear it & re-prompt
-  │
+  ├─ Stored consent older than consentVersion ──▶ cleared, banner shown again
   ├─ Analytics accepted ──▶ initAnalytics()
-  │    ├─ DNT enabled? ──▶ Block tracking
-  │    └─ Otherwise ──▶ Start & flush queue
-  │
-  ├─ Analytics declined ──▶ disableAnalytics(); track() calls are dropped
-  │
-  └─ No consent yet ──▶ No init; track() calls are queued in memory
+  │    ├─ Do Not Track on ──▶ blocked, queue dropped
+  │    └─ otherwise ──▶ started, queue sent
+  ├─ Analytics declined ──▶ disableAnalytics(); track() calls dropped
+  └─ No consent yet ──▶ no init; track() calls queued in memory
 ```
 
-Events fired before the user responds are queued and flushed once consent is granted and
-analytics initializes. A decline, or an init blocked by Do Not Track, drops them.
+## Compatibility
 
-## Scripts
+- React: peer range `^18.0.0 || ^19.0.0`, used by `./react` only.
+- Module formats: ESM and CommonJS, with type declarations for both, from `dist/`.
+- `./react` starts with `"use client"` in both builds; the core entry does not, so server code can
+  import it.
+- Runtimes: browsers for tracking and consent storage. Server runtimes can import every entry point;
+  there, use `getConsentFromCookie` to read consent.
 
-```bash
-pnpm test          # Run tests (watch mode)
-pnpm test:once     # Run tests once
-pnpm test:coverage # Run with coverage
-pnpm lint          # Lint
-pnpm lint:fix      # Lint + autofix
-pnpm typecheck     # Type-check
-pnpm build         # Build dist (ESM, CJS, types)
-```
+## Testing
+
+The analytics state is a module-level singleton with no public reset. In your tests, clear
+`localStorage` between cases and load the module fresh when a case needs a new instance.
+
+This repository's own checks: `pnpm lint`, `pnpm typecheck`, `pnpm test:coverage` (Vitest with
+jsdom, 100% coverage gate) and `pnpm build`.
+
+## Security
+
+Report vulnerabilities privately through
+[GitHub Security Advisories](https://github.com/vllnt/analytics/security/advisories/new). Releases
+are published from CI with npm trusted publishing and provenance.
 
 ## Related packages
 
-- [`@vllnt/convex-analytics`](https://www.npmjs.com/package/@vllnt/convex-analytics): a Convex
-  component that stores events and serves rollups, funnels and retention. Use it as the backend if
-  your app runs on Convex; this package does not send events to it for you.
-- [`@vllnt/convex-consent`](https://www.npmjs.com/package/@vllnt/convex-consent): an append-only
-  consent ledger stored in Convex. Use it when you need a server-side record of consent per
-  subject and purpose; this package only keeps the visitor's choice in the browser.
+- [`@vllnt/convex-analytics`](https://oss.vllnt.com/packages/convex-analytics): a Convex component
+  that stores events and serves rollups, funnels and retention. This package does not send events
+  to it for you.
+- [`@vllnt/convex-consent`](https://oss.vllnt.com/packages/convex-consent): an append-only consent
+  ledger stored in Convex, for a server-side record of consent per subject and purpose. This
+  package only keeps the visitor's choice in the browser.
+
+## Contributing
+
+See [CONTRIBUTING.md](https://github.com/vllnt/analytics/blob/main/CONTRIBUTING.md). Setup:
+`pnpm install`, then `pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build`.
 
 ## License
 
@@ -240,4 +303,4 @@ pnpm build         # Build dist (ESM, CJS, types)
 
 ---
 
-Part of vllnt oss: https://oss.vllnt.com
+Part of [vllnt open source](https://oss.vllnt.com) · [Package page](https://oss.vllnt.com/packages/analytics) · [vllnt.com](https://vllnt.com) · Built by [bntvllnt](https://bntvllnt.com)
