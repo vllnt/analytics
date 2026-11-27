@@ -56,6 +56,10 @@ const ECOSYSTEM = `## Ecosystem
 
 const DOCS = ["README.md", "docs/API.md"];
 
+/** Marketing and recommendation words the docs must not use. */
+const BANNED_WORDS =
+  /\b(lightweight|blazing|powerful|seamless(ly)?|effortless(ly)?|robust|cutting-edge|best-in-class|world-class|best|recommend(ed|s)?|prefer(red|s)?|always use)\b/i;
+
 /** Built at runtime so the domain itself never appears in the repository. */
 const RETIRED_DOMAIN = ["vllnt", "ai"].join(".");
 
@@ -266,14 +270,29 @@ describe("agent-first docs", () => {
     expect(diagnostics).toEqual([]);
   });
 
-  it("every export is in the README API table and in docs/API.md", () => {
+  it("every export has one README API row, linked to its own entry in docs/API.md", () => {
     const api = read("docs/API.md");
+    const apiAnchors = anchors("docs/API.md");
     expect(exportNames.length).toBeGreaterThan(30);
     for (const name of exportNames) {
-      expect(readme, name).toMatch(
-        new RegExp(`^\\| \\[\`${name}\`\\]\\(docs/API\\.md#[\\w-]+\\)`, "m"),
-      );
-      expect(api, name).toMatch(new RegExp(`\\b${name}\\b`));
+      const rows = [
+        ...readme.matchAll(
+          new RegExp(
+            `^\\| \\[\`${name}\`\\]\\(docs/API\\.md#([\\w-]+)\\)`,
+            "gm",
+          ),
+        ),
+      ];
+      expect(rows, name).toHaveLength(1);
+      const own = name.toLowerCase();
+      if (apiAnchors.has(own)) expect(rows[0]?.[1], name).toBe(own);
+      const documented = [
+        `### \`${name}\``,
+        `| \`${name}\``,
+        `| \`${name}(`,
+        `type ${name} =`,
+      ].some((form) => api.includes(form));
+      expect(documented, `${name} has no entry in docs/API.md`).toBe(true);
     }
   });
 
@@ -300,14 +319,26 @@ describe("agent-first docs", () => {
     expect(missing).toEqual([]);
   });
 
-  it("the main entry links its package page in the built declarations", () => {
-    const declarations = readdirSync(join(installed, "dist"))
-      .filter((file) => file.endsWith(".d.ts"))
-      .map((file) => readFileSync(join(installed, "dist", file), "utf8"))
-      .join("\n");
-    expect(declarations).toContain(
-      "@see https://oss.vllnt.com/packages/analytics",
+  it("initAnalytics, and only it, links the package page in TSDoc", () => {
+    const see = "@see https://oss.vllnt.com/packages/analytics";
+    const sources = readdirSync(join(root, "src"))
+      .filter((file) => /\.tsx?$/.test(file))
+      .map((file) => read(`src/${file}`));
+    expect(sources.join("\n").split(see)).toHaveLength(2);
+
+    const checker = program.getTypeChecker();
+    const source = program.getSourceFile(join(installed, "dist", "index.d.ts"));
+    const module = source && checker.getSymbolAtLocation(source);
+    const exported = module
+      ? checker
+          .getExportsOfModule(module)
+          .find((symbol) => symbol.name === "initAnalytics")
+      : undefined;
+    const target = exported && checker.getAliasedSymbol(exported);
+    const tags = (target?.getJsDocTags(checker) ?? []).map(
+      (tag) => `@${tag.name} ${ts.displayPartsToString(tag.text)}`,
     );
+    expect(tags).toContain(see);
   });
 
   it("every thrown or logged error message is in the errors table", () => {
@@ -318,13 +349,19 @@ describe("agent-first docs", () => {
     const sources = readdirSync(join(root, "src")).filter((file) =>
       /\.tsx?$/.test(file),
     );
-    const messages = sources.flatMap((file) => [
-      ...read(`src/${file}`).matchAll(
-        /(?:throw new \w*Error|console\.(?:warn|error))\(\s*"([^"]+)"/g,
+    const code = sources.map((file) => read(`src/${file}`)).join("\n");
+    const calls = [...code.matchAll(/\bthrow\b|console\.(?:warn|error)\(/g)];
+    const messages = [
+      ...code.matchAll(
+        /(?:throw new \w*Error|console\.(?:warn|error))\(\s*(["'`])([^"'`$]+)\1/g,
       ),
-    ]);
+    ].map((match) => match[2]);
     expect(messages.length).toBeGreaterThan(0);
-    for (const [, message] of messages)
+    expect(
+      messages,
+      "every throw and warning needs a literal message",
+    ).toHaveLength(calls.length);
+    for (const message of messages)
       expect(errors).toContain(`| \`${message}\` |`);
   });
 
@@ -351,10 +388,51 @@ describe("agent-first docs", () => {
     expect(llms.split("https://oss.vllnt.com/llms.txt")).toHaveLength(2);
   });
 
-  it("no shipped file mentions the retired company domain", () => {
-    const shipped = packed
-      .filter((path) => !path.startsWith("dist/"))
-      .map((path) => read(path));
+  it("package.json and repository metadata follow the discovery rules", () => {
+    const package_: unknown = JSON.parse(read("package.json"));
+    expect(package_).toMatchObject({
+      author: { name: "bntvllnt", url: "https://bntvllnt.com" },
+      bugs: { url: "https://github.com/vllnt/analytics/issues" },
+      funding: { type: "github", url: "https://github.com/sponsors/bntvllnt" },
+      homepage: "https://oss.vllnt.com/packages/analytics",
+    });
+    const { description, keywords } = package_ as {
+      description: unknown;
+      keywords: unknown;
+    };
+    expect(typeof description).toBe("string");
+    const text = String(description);
+    expect(text.length).toBeLessThanOrEqual(160);
+    expect(text).toMatch(/^[^.]+\.$/);
+    expect(text).not.toMatch(/vllnt projects/i);
+    expect(text).toMatch(/React/);
+    expect(Array.isArray(keywords)).toBe(true);
+    const list = Array.isArray(keywords) ? keywords : [];
+    expect(list.length).toBeGreaterThanOrEqual(8);
+    expect(list.length).toBeLessThanOrEqual(12);
+    expect(new Set(list).size).toBe(list.length);
+  });
+
+  it.each(["README.md", "docs/API.md", "llms.txt", "package.json"])(
+    "%s uses no marketing or recommendation words",
+    (file) => {
+      expect(read(file)).not.toMatch(BANNED_WORDS);
+    },
+  );
+
+  it("no tracked or shipped file mentions the retired company domain", () => {
+    const tracked = execFileSync("git", ["ls-files", "-z"], {
+      cwd: root,
+      encoding: "utf8",
+    })
+      .split("\0")
+      .filter((path) => path !== "" && !/\.(png|jpe?g|gif|ico)$/i.test(path));
+    const shipped = [
+      ...new Set([
+        ...tracked,
+        ...packed.filter((path) => !path.startsWith("dist/")),
+      ]),
+    ].map((path) => read(path));
     const built = readdirSync(join(installed, "dist")).map((file) =>
       readFileSync(join(installed, "dist", file), "utf8"),
     );
