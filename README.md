@@ -222,7 +222,7 @@ The package has no error codes. These are every message it throws or logs as a w
 | Message | Kind | Cause | Fix |
 | --- | --- | --- | --- |
 | `useAnalytics must be used within an AnalyticsProvider` | thrown by `useAnalytics()` | The hook ran outside `<AnalyticsProvider>`. | Render the component inside `<AnalyticsProvider>`, or use `useConsent()`. |
-| `Failed to save consent:` | `console.warn` from `saveConsent()` | Writing `localStorage` or the cookie threw, for example a full quota. | The new choice is not stored and the earlier stored choice stays in effect, for tracking on this page and on later visits. Free storage, or call `clearConsent()` after a failed save. |
+| `Failed to save consent:` | `console.warn` from `saveConsent()` | Writing `localStorage` or the cookie threw, for example a full quota. | The new choice applies on this page but is not stored, so later visits load the earlier stored choice, if any. A failed accept over a stored decline stays blocked on this page too, because `initAnalytics` re-reads the stored decline. Free storage, or call `clearConsent()` after a failed save. |
 
 ## Limits and gotchas
 

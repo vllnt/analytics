@@ -18,8 +18,10 @@ declarations in `dist/`.
 | `@vllnt/analytics/react`        | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `initAnalytics` |
 | `@vllnt/analytics/package.json` | Package metadata                                                   |
 
-Types are exported from `@vllnt/analytics` only. Both entry points share one analytics state, so
-`initAnalytics` from `./react` and `track` from `.` act on the same instance.
+Types are exported from `@vllnt/analytics` only. Within one module format, both entry points share
+one analytics state, so `initAnalytics` from `./react` and `track` from `.` act on the same instance.
+The ESM and CommonJS builds each have their own copy, so mixing `import` and `require` in one
+process gives two instances.
 
 Peer dependency: `react` `^18.0.0 || ^19.0.0` (used by `./react` only).
 
@@ -288,7 +290,8 @@ if (consent && needsRePrompt(consent, 2)) clearConsent();
 Signature: `getConsentFromCookie(cookieString: string): boolean | null`
 
 Parses a `Cookie` header: `true` for `1`, `false` for any other value, `null` when the cookie is
-absent. The name must start the string or follow `;`, so `evil-vllnt-consent=1` does not match.
+absent or empty (`vllnt-consent=`). The name must start the string or follow `;`, so
+`evil-vllnt-consent=1` does not match.
 
 ```ts
 import { getConsentFromCookie } from "@vllnt/analytics";
@@ -354,8 +357,9 @@ Signature: `AnalyticsProvider(props: { children: ReactNode; config: AnalyticsCon
 `consentVersion` defaults to `CONSENT_VERSION`. The provider reads stored consent, clears it when
 `needsRePrompt(stored, consentVersion)`, calls `initAnalytics(config)` while consent has
 `analytics: true`, and calls `disableAnalytics()` while it has `analytics: false`, so after a
-stored decline `track()` calls are dropped, not queued. Its context actions save consent with
-`consentVersion` and call `enableAnalytics` or `disableAnalytics`. Before the user responds (no
+stored decline `track()` calls are dropped, not queued. `acceptAll` and `declineAnalytics` save
+consent with `consentVersion`; `updateConsent` copies the current consent, so it keeps the stored
+version. The actions call `enableAnalytics` or `disableAnalytics`. Before the user responds (no
 stored consent), events are queued in memory and flushed if the user accepts; after
 `resetConsent()`, tracking is blocked and events are dropped until the user responds again. Pass a stable
 `config` (for example a module constant), because the init effect depends on it.
@@ -426,7 +430,8 @@ Re-export of the core [`initAnalytics`](#initanalytics), for apps that only impo
 
 ### Consent versions
 
-`AnalyticsProvider` and `useConsent` save each choice with their `consentVersion`. Raising
+In `AnalyticsProvider` and `useConsent`, `acceptAll` and `declineAnalytics` save the choice with
+`consentVersion`. `updateConsent` copies the current consent, so it keeps the stored version. Raising
 `consentVersion` asks every visitor once more; the new choice is then kept on later visits.
 
 ## Types
