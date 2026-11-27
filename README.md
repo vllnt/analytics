@@ -287,17 +287,21 @@ are published from CI with npm trusted publishing and provenance.
 
 ## Related packages
 
-- [`@vllnt/convex-analytics`](https://oss.vllnt.com/packages/convex-analytics): a Convex component
-  that stores events and serves rollups, funnels and retention. This package does not send events
-  to it for you.
-- [`@vllnt/convex-consent`](https://oss.vllnt.com/packages/convex-consent): an append-only consent
-  ledger stored in Convex, for a server-side record of consent per subject and purpose. This
-  package only keeps the visitor's choice in the browser.
+None: no other @vllnt package is used together with this one in code.
 
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/vllnt/analytics/blob/main/CONTRIBUTING.md). Setup:
 `pnpm install`, then `pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build`.
+
+## Links
+
+- Docs and changelog: [oss.vllnt.com/packages/analytics](https://oss.vllnt.com/packages/analytics) · [release feed](https://oss.vllnt.com/packages/analytics/rss.xml)
+- All @vllnt packages: [oss.vllnt.com](https://oss.vllnt.com) · [search packages and docs on index.vllnt.com](https://index.vllnt.com)
+- Source and issues: [GitHub](https://github.com/vllnt/analytics) · [issues](https://github.com/vllnt/analytics/issues)
+- Questions and updates: [Discord](https://bntvllnt.com/discord) · [X @bntvllnt](https://x.com/bntvllnt)
+- Company and author: [vllnt.com](https://vllnt.com) · [bntvllnt.com](https://bntvllnt.com) · [GitHub @bntvllnt](https://github.com/bntvllnt) · [LinkedIn](https://linkedin.com/in/bntvllnt)
+- Sponsor: [GitHub Sponsors](https://github.com/sponsors/bntvllnt)
 
 ## License
 

@@ -41,6 +41,7 @@ const SECTIONS = [
   "Security",
   "Related packages",
   "Contributing",
+  "Links",
   "License",
 ];
 
@@ -50,9 +51,20 @@ const FOOTER =
 const ECOSYSTEM = `## Ecosystem
 
 - [Package page](https://oss.vllnt.com/packages/analytics)
+- [Release feed](https://oss.vllnt.com/packages/analytics/rss.xml)
 - [All @vllnt packages](https://oss.vllnt.com/llms.txt)
+- [Search vllnt packages and docs](https://index.vllnt.com)
 - [vllnt](https://vllnt.com/llms.txt)
 - [Author](https://bntvllnt.com)`;
+
+const LINKS = `## Links
+
+- Docs and changelog: [oss.vllnt.com/packages/analytics](https://oss.vllnt.com/packages/analytics) · [release feed](https://oss.vllnt.com/packages/analytics/rss.xml)
+- All @vllnt packages: [oss.vllnt.com](https://oss.vllnt.com) · [search packages and docs on index.vllnt.com](https://index.vllnt.com)
+- Source and issues: [GitHub](https://github.com/vllnt/analytics) · [issues](https://github.com/vllnt/analytics/issues)
+- Questions and updates: [Discord](https://bntvllnt.com/discord) · [X @bntvllnt](https://x.com/bntvllnt)
+- Company and author: [vllnt.com](https://vllnt.com) · [bntvllnt.com](https://bntvllnt.com) · [GitHub @bntvllnt](https://github.com/bntvllnt) · [LinkedIn](https://linkedin.com/in/bntvllnt)
+- Sponsor: [GitHub Sponsors](https://github.com/sponsors/bntvllnt)`;
 
 const DOCS = ["README.md", "docs/API.md"];
 
@@ -373,6 +385,39 @@ describe("agent-first docs", () => {
         if (anchor)
           expect(anchors(path), `${file} -> ${path}#${anchor}`).toContain(
             anchor,
+          );
+      }
+    },
+  );
+
+  it("README has the shared links section", () => {
+    const links = readme.slice(
+      readme.indexOf("## Links"),
+      readme.indexOf("## License"),
+    );
+    expect(links.trimEnd()).toBe(LINKS);
+  });
+
+  it("README, package.json and llms.txt share one summary sentence", () => {
+    const package_: unknown = JSON.parse(read("package.json"));
+    const { description } = package_ as { description: unknown };
+    const summaries = read("llms.txt")
+      .split("\n")
+      .filter((line) => line.startsWith("> "))
+      .map((line) => line.slice(2));
+    expect(summaries).toEqual([readmeLines[2]]);
+    expect(description).toBe(readmeLines[2]);
+  });
+
+  it.each(["README.md", "docs/API.md", "llms.txt"])(
+    "%s has descriptive link text and image alt text",
+    (file) => {
+      for (const match of read(file).matchAll(/(!?)\[([^\]]*)\]\(/g)) {
+        const [whole, image, text = ""] = match;
+        if (image) expect(text.trim(), `${file}: ${whole}`).not.toBe("");
+        else
+          expect(text.trim().toLowerCase(), `${file}: ${whole}`).not.toBe(
+            "here",
           );
       }
     },
