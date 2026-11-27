@@ -34,9 +34,12 @@ version. Read them before writing code.
 ```tsx
 import { AnalyticsProvider } from "@vllnt/analytics/react";
 
+// Keep config stable: the provider re-runs init when it changes.
+const config = { app: "my-app", version: 1, debug: true };
+
 function App() {
   return (
-    <AnalyticsProvider config={{ app: "my-app", version: 1, debug: true }}>
+    <AnalyticsProvider config={config}>
       {children}
     </AnalyticsProvider>
   );
@@ -188,16 +191,16 @@ Full reference with signatures and examples: [`docs/API.md`](docs/API.md).
 ## How It Works
 
 ```
-User visits site
+AnalyticsProvider mounts
   │
-  ├─ DNT enabled? ──▶ Block all tracking
+  ├─ Stored consent outdated? ──▶ Clear it & re-prompt
   │
-  ├─ Consent exists?
-  │    ├─ Version outdated? ──▶ Clear & re-prompt
-  │    ├─ Analytics declined? ──▶ Block tracking
-  │    └─ Analytics accepted ──▶ Initialize & flush queue
+  ├─ Analytics accepted ──▶ initAnalytics()
+  │    ├─ DNT enabled? ──▶ Block tracking
+  │    └─ Otherwise ──▶ Start & flush queue
   │
-  └─ No consent ──▶ Queue events until user responds
+  └─ Declined or no consent ──▶ No init; track() calls stay queued in memory
+                                 (declineAnalytics() blocks and empties the queue)
 ```
 
 Events fired before initialization are queued and flushed once consent is granted and analytics initializes.

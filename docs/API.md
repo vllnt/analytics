@@ -22,8 +22,10 @@ Types are exported from `@vllnt/analytics` only. Both entry points share one ana
 
 Peer dependency: `react` `^18.0.0 || ^19.0.0` (used by `./react` only).
 
-All browser APIs are guarded: on the server, tracking functions return without doing anything
-and consent readers return `null` or `false`.
+All browser APIs are guarded, so importing on the server is safe. On the server `track`,
+`trackPage`, `identify` and `resetAnalytics` return early, and consent readers return `null` or
+`false`. `initAnalytics`, `enableAnalytics` and `disableAnalytics` have no server guard:
+`initAnalytics` on the server starts the process-wide instance, so call it only in the browser.
 
 ## Tracking (`@vllnt/analytics`)
 
@@ -31,8 +33,11 @@ and consent readers return `null` or `false`.
 
 Starts the shared analytics instance and flushes queued events. Later calls do nothing while an
 instance exists. It does not start, and blocks tracking, when Do Not Track is on (`"1"` or
-`"yes"`) or stored consent has `analytics: false`. With no stored consent it starts, so call it
-only after the user accepts if you need opt-in (`AnalyticsProvider` does this for you).
+`"yes"`) or stored consent has `analytics: false`; already queued events are kept, not flushed.
+With no stored consent it starts, so call it only after the user accepts if you need opt-in
+(`AnalyticsProvider` does this for you). Once tracking is blocked (by a blocked init or by
+`disableAnalytics`), calling `initAnalytics` again does not unblock it; only `enableAnalytics`
+does.
 
 ```ts
 import { initAnalytics } from "@vllnt/analytics";
@@ -76,10 +81,13 @@ resetAnalytics();
 
 ### `enableAnalytics(config: AnalyticsConfig): void`
 
-Unblocks and re-runs `initAnalytics(config)` after consent is granted. Does nothing unless
-tracking is currently blocked, and does nothing while Do Not Track is on.
+Unblocks, discards the current instance and runs `initAnalytics(config)` again. Does nothing
+unless tracking is currently blocked, and does nothing while Do Not Track is on. Because it
+re-reads stored consent, save the accepted consent first: a stored `analytics: false` blocks it
+again. The new instance has no `userId` or `traits`.
 
 ```ts
+saveConsent(createAcceptAllConsent());
 enableAnalytics({ app: "my-app" });
 ```
 
@@ -193,7 +201,8 @@ Returns a copy with one category changed and a new timestamp. Setting `functiona
 returns `current` unchanged.
 
 ```ts
-const next = updateConsentCategory(consent, "analytics", false);
+const stored = loadConsent();
+if (stored) saveConsent(updateConsentCategory(stored, "analytics", false));
 ```
 
 ### `needsRePrompt(consent: ConsentState, currentVersion: number): boolean`
@@ -241,7 +250,12 @@ if (isValidConsentState(parsed)) saveConsent(parsed);
 
 ## React (`@vllnt/analytics/react`)
 
-The module starts with `"use client"`.
+The ESM build (`dist/react.js`) starts with `"use client"`.
+
+Both `AnalyticsProvider` and `useConsent` read stored consent during the first render. On the
+server that read returns `null`, so `consent` is `null` and `hasResponded` is `false` there, while
+the first browser render may already see stored consent. If you render a banner from
+`hasResponded`, render it only after the component has mounted to avoid a hydration mismatch.
 
 ### `AnalyticsProvider`
 
@@ -250,13 +264,17 @@ function AnalyticsProvider(props: {
   children: ReactNode;
   config: AnalyticsConfig;
   consentVersion?: number; // default CONSENT_VERSION
-}): JSX.Element;
+}): React.JSX.Element;
 ```
 
-Loads stored consent on mount, clears it when `needsRePrompt(stored, consentVersion)`, and calls
+Reads stored consent, clears it when `needsRePrompt(stored, consentVersion)`, and calls
 `initAnalytics(config)` while consent has `analytics: true`. Its context actions save consent and
 call `enableAnalytics` or `disableAnalytics`. Pass a stable `config` (for example a module
 constant), because the init effect depends on it.
+
+With stored `analytics: false`, the provider does not call `initAnalytics`, so tracking is not
+blocked after a reload: `track()` calls are queued in memory and are flushed if the user accepts
+later. Call `disableAnalytics()` yourself if events from a declined visitor must be dropped.
 
 ```tsx
 const config = { app: "my-app", version: 1 };
@@ -271,6 +289,7 @@ export function Root({ children }: { children: React.ReactNode }) {
 Returns the provider context; throws `useAnalytics must be used within an AnalyticsProvider`
 outside one. Fields: `config`, `consent`, `hasResponded`, `isLoading` (always `false`),
 `acceptAll()`, `declineAnalytics()`, `updateConsent(category, value)`, `resetConsent()`.
+`updateConsent` does nothing while `consent` is `null` (before the user has responded).
 
 ```tsx
 function CookieBanner() {

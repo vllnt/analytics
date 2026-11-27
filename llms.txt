@@ -22,15 +22,21 @@ before writing code.
 
 ## Behaviour
 
-- Events tracked before `initAnalytics()` are queued and flushed on init.
-- Blocked when Do Not Track is on (`"1"` or `"yes"`) or stored consent has `analytics: false`.
-  With no stored consent, `initAnalytics()` starts tracking; `AnalyticsProvider` calls it only
-  after the user accepts.
+- Events tracked before `initAnalytics()` are queued and flushed on the first unblocked init;
+  a blocked init keeps them queued.
+- `initAnalytics()` blocks tracking when Do Not Track is on (`"1"` or `"yes"`) or stored consent
+  has `analytics: false`. With no stored consent it starts tracking. `AnalyticsProvider` calls it
+  only while consent has `analytics: true`; after a stored decline it does not call it, so events
+  stay queued in memory until the user accepts or `disableAnalytics()` is called.
+- Once blocked, only `enableAnalytics(config)` unblocks; it re-reads stored consent.
 - Consent is stored in `localStorage` (`vllnt:analytics-consent`) and a `vllnt-consent` cookie
   (`1` or `0`) for SSR; `getConsentFromCookie(cookieString)` reads it with an anchored match.
-- Consent is versioned (`CONSENT_VERSION`); a lower stored version re-prompts.
+- Consent is versioned (`CONSENT_VERSION`); a lower stored version re-prompts. The hooks always
+  save version `CONSENT_VERSION` (`1`), so a `consentVersion` above `1` re-prompts on every visit
+  (see `docs/API.md`).
 - `track()` ignores empty or non-string names; `identify()` ignores empty or non-string ids.
-- Browser APIs are guarded, so server-side import is safe.
+- Browser APIs are guarded, so server-side import is safe. `initAnalytics()` has no server
+  guard and starts the process-wide instance there, so call it only in the browser.
 
 ## Docs
 

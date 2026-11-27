@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -11,10 +11,6 @@ import { beforeAll, describe, expect, it } from "vitest";
  */
 const root = resolve(__dirname, "../..");
 
-const documentFiles = readdirSync(join(root, "docs"))
-  .filter((name) => name.endsWith(".md"))
-  .map((name) => `docs/${name}`);
-
 const required = [
   "package.json",
   "README.md",
@@ -23,7 +19,7 @@ const required = [
   "llms.txt",
   "src/index.ts",
   "src/react.tsx",
-  ...documentFiles,
+  "docs/API.md",
 ];
 
 /** Contributor and internal files must never ship. */
@@ -44,7 +40,7 @@ function packedFiles(): string[] {
   const output = execFileSync(
     "npm",
     ["pack", "--dry-run", "--json", "--ignore-scripts"],
-    { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+    { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
   );
   const report: unknown = JSON.parse(output);
   if (!Array.isArray(report)) throw new Error("npm pack report is not a list");
@@ -90,10 +86,6 @@ describe("published package contents", () => {
     files = packedFiles();
   }, 60_000);
 
-  it("ships docs/API.md", () => {
-    expect(documentFiles).toContain("docs/API.md");
-  });
-
   it.each(required)("ships %s", (path) => {
     expect(files).toContain(path);
   });
@@ -104,7 +96,7 @@ describe("published package contents", () => {
     ).toEqual([]);
   });
 
-  it.each(["llms.txt", "README.md", ...documentFiles])(
+  it.each(["llms.txt", "README.md", "docs/API.md"])(
     "relative links in %s resolve inside the package",
     (file) => {
       const missing = relativeLinks(file).filter(
