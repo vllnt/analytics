@@ -5,8 +5,8 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  minimatch@>=7.0.0 <11.0.1: 11.0.5
-  deepmerge-ts@<8.0.0: 8.0.0
+  minimatch@>=7.0.0 <11.0.1: 11.0.9
+  deepmerge-ts@<8.0.0: 8.0.2
   handlebars@<4.7.10: 4.7.10
 
 importers:
@@ -1378,9 +1378,9 @@ packages:
   deep-is@0.1.4:
     resolution: {integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==}
 
-  deepmerge-ts@8.0.0:
-    resolution: {integrity: sha512-ICNjaP0ML+eSdEpJYQC46XiAn/UjAdwbEl0dE8p85ZTeNDinN4Kd4+9jS4OSAuH7st6eC7rQhsqTF5zIDaUm2g==}
-    engines: {node: '>=16.0.0'}
+  deepmerge-ts@8.0.2:
+    resolution: {integrity: sha512-uqbvqLUMrc6p0MO+WBRtTxY55hmyh94WRwI5a++PZe54X+bfVh59FSN7uWCBCW1CCVjzjnrwzfI8zidE2obMMw==}
+    engines: {node: '>=16.9.0'}
 
   define-data-property@1.1.4:
     resolution: {integrity: sha512-rBMvIzlpA8v6E+SJZoo++HAYqsLrkg7MSfIinMPFhmkorw7X+dOXVJQs+QT69zGkzMyfDnIMN2Wid1+NbL3T+A==}
@@ -2188,10 +2188,6 @@ packages:
   min-indent@1.0.1:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
     engines: {node: '>=4'}
-
-  minimatch@11.0.5:
-    resolution: {integrity: sha512-snPlVppFcYWfLLFQGhDxUyBcHNtMlWmn3jtj7pEaO+DP8pqL0IvAzXhMYmn1z9ASNtgmwLBdFxSf4tMUB0OTKA==}
-    engines: {node: 20 || >=22}
 
   minimatch@11.0.9:
     resolution: {integrity: sha512-KCFkfyjqerNlSstjlhIGNXIKZGA/6O4V4RlhZ+Dsr621SPPw0mzlypE9D9ZOoPiVefHID+j7/XuMMlqfD/F60Q==}
@@ -3660,7 +3656,7 @@ snapshots:
       '@typescript-eslint/types': 8.58.2
       '@typescript-eslint/visitor-keys': 8.58.2
       debug: 4.4.3
-      minimatch: 11.0.5
+      minimatch: 11.0.9
       semver: 7.8.5
       tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@5.9.3)
@@ -3675,7 +3671,7 @@ snapshots:
       '@typescript-eslint/types': 8.72.0
       '@typescript-eslint/visitor-keys': 8.72.0
       debug: 4.4.3
-      minimatch: 11.0.5
+      minimatch: 11.0.9
       semver: 7.8.5
       tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@6.0.3)
@@ -4085,7 +4081,7 @@ snapshots:
 
   deep-is@0.1.4: {}
 
-  deepmerge-ts@8.0.0: {}
+  deepmerge-ts@8.0.2: {}
 
   define-data-property@1.1.4:
     dependencies:
@@ -4352,7 +4348,7 @@ snapshots:
   eslint-plugin-functional@10.0.1(eslint@9.39.5)(typescript@6.0.3):
     dependencies:
       '@typescript-eslint/utils': 8.72.0(eslint@9.39.5)(typescript@6.0.3)
-      deepmerge-ts: 8.0.0
+      deepmerge-ts: 8.0.2
       escape-string-regexp: 5.0.0
       eslint: 9.39.5
       is-immutable-type: 5.0.4(eslint@9.39.5)(typescript@6.0.3)
@@ -5051,11 +5047,6 @@ snapshots:
       picomatch: 2.3.2
 
   min-indent@1.0.1: {}
-
-  minimatch@11.0.5:
-    dependencies:
-      '@isaacs/nonrecursive-glob-match': 1.1.0
-      brace-expansion: 5.0.12
 
   minimatch@11.0.9:
     dependencies:
