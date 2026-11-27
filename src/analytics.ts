@@ -39,6 +39,15 @@ export function _resetAnalyticsState(): void {
 }
 
 /**
+ * Block tracking and drop queued events, so nothing recorded before the
+ * decision is sent later.
+ */
+function block(): void {
+  isBlocked = true;
+  eventQueue = [];
+}
+
+/**
  * Log event in debug mode
  */
 function debugLog(type: string, data: unknown): void {
@@ -64,7 +73,7 @@ export function initAnalytics(config: AnalyticsConfig): void {
 
   // Check Do Not Track
   if (isDoNotTrackEnabled()) {
-    isBlocked = true;
+    block();
     debugLog("init", "Do Not Track enabled, analytics blocked");
     return;
   }
@@ -72,7 +81,7 @@ export function initAnalytics(config: AnalyticsConfig): void {
   // Check consent
   const consent = loadConsent();
   if (consent && !consent.analytics) {
-    isBlocked = true;
+    block();
     debugLog("init", "Analytics consent declined");
     return;
   }
@@ -207,8 +216,7 @@ export function enableAnalytics(config: AnalyticsConfig): void {
  * Callers should trigger a page reload or call resetAnalytics() to purge PII.
  */
 export function disableAnalytics(): void {
-  isBlocked = true;
-  eventQueue.length = 0; // Clear queue
+  block();
 }
 
 /**
