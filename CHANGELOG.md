@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - Unreleased
+## [0.2.0] - 2026-11-27
 
 ### Added
 
@@ -13,6 +13,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (every public export with its signature and an example), `llms.txt`, `CHANGELOG.md` and the
   TypeScript sources in `src/` (tests excluded). `llms.txt` links to these bundled files with
   relative paths.
+- `createAcceptAllConsent()` and `createDeclineAnalyticsConsent()` take an optional consent
+  `version` (default `CONSENT_VERSION`).
 
 ### Changed
 
@@ -22,11 +24,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   unchanged. `./package.json` is now exported too.
 - `track()` ignores events whose name is empty or not a string, and `identify()` ignores an empty
   or non-string user id, instead of recording them.
+- After a stored decline, `AnalyticsProvider` now blocks tracking with `disableAnalytics()`, so
+  `track()` calls are dropped. Before, they were queued in memory without limit and sent if the
+  user accepted later.
+- When `initAnalytics()` is blocked by Do Not Track or a stored decline, it drops the events
+  queued before it, as `disableAnalytics()` does. Before, they were kept and sent by a later
+  `enableAnalytics()`.
 
 ### Fixed
 
 - `getConsentFromCookie()` no longer matches look-alike cookie names that merely end with
   `vllnt-consent` (for example `evil-vllnt-consent=1`).
+- `AnalyticsProvider` and `useConsent` save each choice with their `consentVersion`. Before, they
+  always saved version `1`, so a `consentVersion` above `1` asked the user again on every visit.
+- The CommonJS build of `@vllnt/analytics/react` (`dist/react.cjs`) now starts with
+  `"use client"`. Before, the directive came after an injected helper and had no effect.
 
 ### Security
 
