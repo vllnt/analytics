@@ -23,8 +23,9 @@ Types are exported from `@vllnt/analytics` only. Both entry points share one ana
 Peer dependency: `react` `^18.0.0 || ^19.0.0` (used by `./react` only).
 
 All browser APIs are guarded, so importing on the server is safe. On the server `track`,
-`trackPage`, `identify` and `resetAnalytics` return early, and consent readers return `null` or
-`false`. `initAnalytics`, `enableAnalytics` and `disableAnalytics` have no server guard:
+`trackPage`, `identify` and `resetAnalytics` return early, `loadConsent` returns `null`, and
+`isStorageAvailable` and `isDoNotTrackEnabled` return `false`. `getConsentFromCookie` only parses
+the string it is given, so it is the consent reader to use on the server. `initAnalytics`, `enableAnalytics` and `disableAnalytics` have no server guard:
 `initAnalytics` on the server starts the process-wide instance, so call it only in the browser.
 
 ## Tracking (`@vllnt/analytics`)
@@ -294,7 +295,9 @@ outside one. Fields: `config`, `consent`, `hasResponded`, `isLoading` (always `f
 ```tsx
 function CookieBanner() {
   const { hasResponded, acceptAll, declineAnalytics } = useAnalytics();
-  if (hasResponded) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted || hasResponded) return null;
   return (
     <div>
       <button onClick={acceptAll}>Accept</button>

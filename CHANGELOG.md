@@ -17,8 +17,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - The package entry points now resolve to compiled output in `dist` (ESM, CommonJS and type
-  declarations) instead of raw TypeScript sources, so it works without transpiling `node_modules`. The `.` and `./react`
-  export subpaths and the `react` peer range are unchanged. `./package.json` is now exported too.
+  declarations) instead of raw TypeScript sources, so it works without transpiling
+  `node_modules`. The `.` and `./react` export subpaths and the `react` peer range are
+  unchanged. `./package.json` is now exported too.
 - `track()` ignores events whose name is empty or not a string, and `identify()` ignores an empty
   or non-string user id, instead of recording them.
 

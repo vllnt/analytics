@@ -32,12 +32,14 @@ version. Read them before writing code.
 ### React Provider
 
 ```tsx
+import type { ReactNode } from "react";
 import { AnalyticsProvider } from "@vllnt/analytics/react";
 
-// Keep config stable: the provider re-runs init when it changes.
+// Keep config stable: an inline object re-runs the init effect and re-renders every consumer.
+// Config changes after analytics has started are ignored.
 const config = { app: "my-app", version: 1, debug: true };
 
-function App() {
+function App({ children }: { children: ReactNode }) {
   return (
     <AnalyticsProvider config={config}>
       {children}
@@ -49,13 +51,17 @@ function App() {
 ### Consent Banner
 
 ```tsx
+import { useEffect, useState } from "react";
 import { useAnalytics } from "@vllnt/analytics/react";
 
 // Render inside <AnalyticsProvider> so accepting starts tracking.
 function CookieBanner() {
-  const { hasResponded, isLoading, acceptAll, declineAnalytics } = useAnalytics();
+  const { hasResponded, acceptAll, declineAnalytics } = useAnalytics();
+  // Stored consent is read in the browser only; wait for mount to avoid a hydration mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  if (isLoading || hasResponded) return null;
+  if (!mounted || hasResponded) return null;
 
   return (
     <div>
