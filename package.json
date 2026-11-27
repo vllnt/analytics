@@ -1,24 +1,38 @@
 {
   "name": "@vllnt/analytics",
   "version": "0.2.0",
-  "description": "Lightweight, privacy-first analytics with consent management and React integration",
+  "description": "Cookie consent state and consent-gated event tracking for React and TypeScript, with Do Not Track and an SSR consent cookie.",
   "type": "module",
   "packageManager": "pnpm@12.22.0",
   "license": "MIT",
+  "author": {
+    "name": "bntvllnt",
+    "url": "https://bntvllnt.com"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/bntvllnt"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vllnt/analytics.git"
   },
   "homepage": "https://oss.vllnt.com/packages/analytics",
+  "bugs": {
+    "url": "https://github.com/vllnt/analytics/issues"
+  },
   "keywords": [
     "analytics",
-    "consent",
-    "privacy",
-    "gdpr",
-    "react",
-    "do-not-track",
+    "event-tracking",
     "cookie-consent",
-    "ssr"
+    "consent-management",
+    "gdpr",
+    "do-not-track",
+    "privacy",
+    "react",
+    "react-hooks",
+    "ssr",
+    "typescript"
   ],
   "sideEffects": false,
   "files": [
