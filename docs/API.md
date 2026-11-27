@@ -39,7 +39,7 @@ Signature: `initAnalytics(config: AnalyticsConfig): void`
 Starts the shared analytics instance and flushes queued events. Later calls do nothing while an
 instance exists. It does not start, and blocks tracking, when Do Not Track is on (`"1"` or
 `"yes"`) or stored consent has `analytics: false`; already queued events are then dropped, so
-they are never sent later. With no stored consent it starts, so call it only after the user
+they are never flushed later. With no stored consent it starts, so call it only after the user
 accepts if you need opt-in (`AnalyticsProvider` does this for you). Once tracking is blocked (by a
 blocked init or by `disableAnalytics`), calling `initAnalytics` again does not unblock it; only
 `enableAnalytics` does.
@@ -157,7 +157,7 @@ console.log(getAnalyticsState()?.userId);
 
 ### Tutorial helpers
 
-Typed wrappers around `track` that send fixed event names (`TutorialEventName`). Every helper
+Typed wrappers around `track` with fixed event names (`TutorialEventName`). Every helper
 needs `tutorial_id`, `tutorial_title` and `locale`.
 
 | Function                              | Event name                  | Extra required fields           |
@@ -356,7 +356,8 @@ Signature: `AnalyticsProvider(props: { children: ReactNode; config: AnalyticsCon
 `analytics: true`, and calls `disableAnalytics()` while it has `analytics: false`, so after a
 stored decline `track()` calls are dropped, not queued. Its context actions save consent with
 `consentVersion` and call `enableAnalytics` or `disableAnalytics`. Before the user responds (no
-stored consent), events are queued in memory and flushed if the user accepts. Pass a stable
+stored consent), events are queued in memory and flushed if the user accepts; after
+`resetConsent()`, tracking is blocked and events are dropped until the user responds again. Pass a stable
 `config` (for example a module constant), because the init effect depends on it.
 
 ```tsx

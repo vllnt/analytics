@@ -54,12 +54,12 @@ Every public export. Full signatures and examples: [`docs/API.md`](docs/API.md).
 | [`disableAnalytics`](docs/API.md#disableanalytics) | `.` | Blocks tracking and empties the queue. |
 | [`isAnalyticsEnabled`](docs/API.md#isanalyticsenabled) | `.` | `true` when started and not blocked. |
 | [`getAnalyticsState`](docs/API.md#getanalyticsstate) | `.` | Current instance state, for debugging. |
-| [`trackTutorialStart`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_start`. |
-| [`trackSectionView`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_section_view`. |
-| [`trackSectionComplete`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_section_complete`. |
-| [`trackTutorialComplete`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_complete`. |
-| [`trackTutorialNavigation`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_navigation`. |
-| [`trackTimeSpent`](docs/API.md#tutorial-helpers) | `.` | Sends `tutorial_time_spent`. |
+| [`trackTutorialStart`](docs/API.md#tutorial-helpers) | `.` | Tracks a `tutorial_start` event. |
+| [`trackSectionView`](docs/API.md#tutorial-helpers) | `.` | Tracks a `tutorial_section_view` event. |
+| [`trackSectionComplete`](docs/API.md#tutorial-helpers) | `.` | Tracks a `tutorial_section_complete` event. |
+| [`trackTutorialComplete`](docs/API.md#tutorial-helpers) | `.` | Tracks a `tutorial_complete` event. |
+| [`trackTutorialNavigation`](docs/API.md#tutorial-helpers) | `.` | Tracks a `tutorial_navigation` event. |
+| [`trackTimeSpent`](docs/API.md#tutorial-helpers) | `.` | Tracks a `tutorial_time_spent` event. |
 | [`CONSENT_VERSION`](docs/API.md#constants) | `.` | Default consent version, `1`. |
 | [`CONSENT_STORAGE_KEY`](docs/API.md#constants) | `.` | `localStorage` key, `"vllnt:analytics-consent"`. |
 | [`CONSENT_COOKIE_NAME`](docs/API.md#constants) | `.` | Cookie name, `"vllnt-consent"`. |
@@ -81,7 +81,7 @@ Every public export. Full signatures and examples: [`docs/API.md`](docs/API.md).
 | [`AnalyticsEvent`](docs/API.md#types) | `.` (type) | A queued event: name, properties, timestamp. |
 | [`ConsentCategory`](docs/API.md#types) | `.` (type) | `"analytics" \| "functional"`. |
 | [`ConsentState`](docs/API.md#types) | `.` (type) | Stored consent: categories, timestamp, version. |
-| [`TutorialEventName`](docs/API.md#types) | `.` (type) | Event names sent by the tutorial helpers. |
+| [`TutorialEventName`](docs/API.md#types) | `.` (type) | Event names used by the tutorial helpers. |
 | [`TutorialEventProperties`](docs/API.md#types) | `.` (type) | Properties for the tutorial helpers. |
 | [`UseConsentOptions`](docs/API.md#types) | `.` (type) | `{ consentVersion? }`. |
 | [`UseConsentReturn`](docs/API.md#types) | `.` (type) | Return value of `useConsent`. |
@@ -200,7 +200,8 @@ import {
 
 const config = { app: "my-app" };
 
-if (loadConsent()?.analytics) initAnalytics(config);
+// A stored accept starts tracking; a stored decline blocks it and drops queued events.
+if (loadConsent()) initAnalytics(config);
 
 export function onAccept(): void {
   saveConsent(createAcceptAllConsent());
@@ -221,15 +222,16 @@ The package has no error codes. These are every message it throws or logs as a w
 | Message | Kind | Cause | Fix |
 | --- | --- | --- | --- |
 | `useAnalytics must be used within an AnalyticsProvider` | thrown by `useAnalytics()` | The hook ran outside `<AnalyticsProvider>`. | Render the component inside `<AnalyticsProvider>`, or use `useConsent()`. |
-| `Failed to save consent:` | `console.warn` from `saveConsent()` | Writing `localStorage` or the cookie threw, for example a full quota. | The choice may not be stored, so the visitor can be asked again on the next visit. Free storage, or accept that. |
+| `Failed to save consent:` | `console.warn` from `saveConsent()` | Writing `localStorage` or the cookie threw, for example a full quota. | The new choice is not stored and the earlier stored choice stays in effect, for tracking on this page and on later visits. Free storage, or call `clearConsent()` after a failed save. |
 
 ## Limits and gotchas
 
 - No transport and no event callback: events never leave the page. With `debug: true` they are
   logged with `console.log` as `[analytics:track]`, `[analytics:page]` and similar.
 - Before the visitor responds, `track()` and `trackPage()` are queued in memory with no size
-  limit. The first unblocked `initAnalytics()` sends them; a decline or a Do Not Track block drops
-  them.
+  limit. The first unblocked `initAnalytics()` flushes them; a decline or a Do Not Track block drops
+  them. After `resetConsent()`, tracking is blocked and events are dropped until the visitor
+  responds again.
 - `identify()` before init or while blocked does nothing; it is not queued.
 - `track()` with an empty or non-string name and `identify()` with an empty or non-string id do
   nothing.
@@ -255,7 +257,7 @@ AnalyticsProvider mounts
   ├─ Stored consent older than consentVersion ──▶ cleared, banner shown again
   ├─ Analytics accepted ──▶ initAnalytics()
   │    ├─ Do Not Track on ──▶ blocked, queue dropped
-  │    └─ otherwise ──▶ started, queue sent
+  │    └─ otherwise ──▶ started, queue flushed
   ├─ Analytics declined ──▶ disableAnalytics(); track() calls dropped
   └─ No consent yet ──▶ no init; track() calls queued in memory
 ```

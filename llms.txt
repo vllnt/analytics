@@ -36,7 +36,8 @@ before writing code.
 - `initAnalytics()` blocks tracking when Do Not Track is on (`"1"` or `"yes"`) or stored consent
   has `analytics: false`. With no stored consent it starts tracking. `AnalyticsProvider` calls it
   while consent has `analytics: true` and calls `disableAnalytics()` after a stored decline, so a
-  declined visitor's events are dropped. Before the user responds, events are queued in memory.
+  declined visitor's events are dropped. Before the user responds, events are queued in memory,
+  except after `resetConsent()`, which blocks and drops events until the user responds again.
 - Once blocked, only `enableAnalytics(config)` unblocks; it re-reads stored consent.
 - Consent is stored in `localStorage` (`vllnt:analytics-consent`) and a `vllnt-consent` cookie
   (`1` or `0`) for SSR; `getConsentFromCookie(cookieString)` reads it with an anchored match.

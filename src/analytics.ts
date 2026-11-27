@@ -1,6 +1,3 @@
-// Lightweight custom analytics implementation
-// Replaces external 'analytics' package with minimal implementation
-
 import { isDoNotTrackEnabled, loadConsent } from "./consent";
 import type {
   AnalyticsConfig,
@@ -40,7 +37,7 @@ export function _resetAnalyticsState(): void {
 
 /**
  * Block tracking and drop queued events, so nothing recorded before the
- * decision is sent later.
+ * decision is flushed later.
  */
 function block(): void {
   isBlocked = true;
@@ -66,7 +63,7 @@ function sendEvent(name: string, properties?: Record<string, unknown>): void {
 }
 
 /**
- * Start the shared analytics instance and send queued events. Blocks tracking,
+ * Start the shared analytics instance and flush queued events. Blocks tracking,
  * and drops the queue, when Do Not Track is on or stored consent declines it.
  * @see https://oss.vllnt.com/packages/analytics
  */
