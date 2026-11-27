@@ -11,7 +11,7 @@ import { beforeAll, describe, expect, it } from "vitest";
  */
 const root = resolve(__dirname, "../..");
 
-const docs = readdirSync(join(root, "docs"))
+const documentFiles = readdirSync(join(root, "docs"))
   .filter((name) => name.endsWith(".md"))
   .map((name) => `docs/${name}`);
 
@@ -23,7 +23,7 @@ const required = [
   "llms.txt",
   "src/index.ts",
   "src/react.tsx",
-  ...docs,
+  ...documentFiles,
 ];
 
 /** Contributor and internal files must never ship. */
@@ -73,10 +73,14 @@ function packedFiles(): string[] {
 
 function relativeLinks(file: string): string[] {
   const text = readFileSync(join(root, file), "utf8");
-  return [...text.matchAll(/\]\(([^)\s]+)\)/g)]
-    .map((match) => match[1].split("#")[0])
-    .filter((target) => target !== "" && !/^[a-z]+:/i.test(target))
-    .map((target) => posix.normalize(posix.join(dirname(file), target)));
+  const links: string[] = [];
+  for (const match of text.matchAll(/\]\(([^)\s#]*)[^)\s]*\)/g)) {
+    const target = match[1];
+    if (target && !/^[a-z]+:/i.test(target)) {
+      links.push(posix.normalize(posix.join(dirname(file), target)));
+    }
+  }
+  return links;
 }
 
 describe("published package contents", () => {
@@ -87,7 +91,7 @@ describe("published package contents", () => {
   }, 60_000);
 
   it("ships docs/API.md", () => {
-    expect(docs).toContain("docs/API.md");
+    expect(documentFiles).toContain("docs/API.md");
   });
 
   it.each(required)("ships %s", (path) => {
@@ -100,7 +104,7 @@ describe("published package contents", () => {
     ).toEqual([]);
   });
 
-  it.each(["llms.txt", "README.md", ...docs])(
+  it.each(["llms.txt", "README.md", ...documentFiles])(
     "relative links in %s resolve inside the package",
     (file) => {
       const missing = relativeLinks(file).filter(
