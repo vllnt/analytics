@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { _resetAnalyticsState } from "../analytics";
+import { _resetAnalyticsState, isAnalyticsEnabled, track } from "../analytics";
 import { CONSENT_STORAGE_KEY } from "../consent";
 import { AnalyticsProvider, useAnalytics, useConsent } from "../react";
 import type { ConsentState } from "../types";
@@ -399,6 +399,93 @@ describe("react", () => {
       });
 
       expect(result.current.consent).toBe(null);
+    });
+  });
+
+  describe("consentVersion above 1", () => {
+    const providerV2 = ({ children }: { children: ReactNode }) => (
+      <AnalyticsProvider config={baseConfig} consentVersion={2}>
+        {children}
+      </AnalyticsProvider>
+    );
+
+    it("AnalyticsProvider keeps an accepted choice on the next mount", () => {
+      const first = renderHook(() => useAnalytics(), { wrapper: providerV2 });
+      act(() => {
+        first.result.current.acceptAll();
+      });
+      expect(first.result.current.consent?.version).toBe(2);
+      first.unmount();
+
+      const second = renderHook(() => useAnalytics(), { wrapper: providerV2 });
+      expect(second.result.current.hasResponded).toBe(true);
+      expect(second.result.current.consent?.analytics).toBe(true);
+    });
+
+    it("AnalyticsProvider keeps a declined choice on the next mount", () => {
+      const first = renderHook(() => useAnalytics(), { wrapper: providerV2 });
+      act(() => {
+        first.result.current.declineAnalytics();
+      });
+      first.unmount();
+
+      const second = renderHook(() => useAnalytics(), { wrapper: providerV2 });
+      expect(second.result.current.hasResponded).toBe(true);
+      expect(second.result.current.consent?.analytics).toBe(false);
+    });
+
+    it("useConsent keeps the choice on the next mount", () => {
+      const first = renderHook(() => useConsent({ consentVersion: 2 }));
+      act(() => {
+        first.result.current.acceptAll();
+      });
+      first.unmount();
+
+      const second = renderHook(() => useConsent({ consentVersion: 2 }));
+      expect(second.result.current.hasResponded).toBe(true);
+      expect(second.result.current.consent?.version).toBe(2);
+
+      act(() => {
+        second.result.current.declineAnalytics();
+      });
+      second.unmount();
+
+      const third = renderHook(() => useConsent({ consentVersion: 2 }));
+      expect(third.result.current.consent?.analytics).toBe(false);
+      expect(third.result.current.consent?.version).toBe(2);
+    });
+  });
+
+  describe("stored decline", () => {
+    it("AnalyticsProvider drops events instead of queuing them", () => {
+      const declinedConsent: ConsentState = {
+        analytics: false,
+        functional: true,
+        timestamp: "2025-01-01T00:00:00.000Z",
+        version: 1,
+      };
+      localStorage.setItem(
+        CONSENT_STORAGE_KEY,
+        JSON.stringify(declinedConsent),
+      );
+      const config = { ...baseConfig, debug: true };
+      const { result } = renderHook(() => useAnalytics(), {
+        wrapper: ({ children }: { children: ReactNode }) => (
+          <AnalyticsProvider config={config}>{children}</AnalyticsProvider>
+        ),
+      });
+
+      track("while_declined");
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      act(() => {
+        result.current.acceptAll();
+      });
+
+      expect(isAnalyticsEnabled()).toBe(true);
+      expect(logSpy).not.toHaveBeenCalledWith(
+        "[analytics:track]",
+        expect.anything(),
+      );
     });
   });
 

@@ -67,28 +67,35 @@ export function AnalyticsProvider({
 
   const [hasResponded, setHasResponded] = useState(() => consent !== null);
 
-  // Initialize analytics if stored consent allows
+  // Start analytics when consent allows it; block it (and drop queued
+  // events) when the stored choice is a decline.
   useEffect(() => {
-    if (consent?.analytics) {
+    if (!consent) return;
+    if (consent.analytics) {
       initAnalytics(config);
+    } else {
+      disableAnalytics();
     }
   }, [consent, config]);
 
   const acceptAll = useCallback(() => {
-    const newConsent = createAcceptAllConsent();
+    const newConsent = { ...createAcceptAllConsent(), version: consentVersion };
     saveConsent(newConsent);
     setConsent(newConsent);
     setHasResponded(true);
     enableAnalytics(config);
-  }, [config]);
+  }, [config, consentVersion]);
 
   const declineAnalytics = useCallback(() => {
-    const newConsent = createDeclineAnalyticsConsent();
+    const newConsent = {
+      ...createDeclineAnalyticsConsent(),
+      version: consentVersion,
+    };
     saveConsent(newConsent);
     setConsent(newConsent);
     setHasResponded(true);
     disableAnalytics();
-  }, []);
+  }, [consentVersion]);
 
   const updateConsentHandler = useCallback(
     (category: ConsentCategory, value: boolean) => {
@@ -176,18 +183,21 @@ export function useConsent(options: UseConsentOptions = {}): UseConsentReturn {
   const [hasResponded, setHasResponded] = useState(() => consent !== null);
 
   const acceptAll = useCallback(() => {
-    const newConsent = createAcceptAllConsent();
+    const newConsent = { ...createAcceptAllConsent(), version: consentVersion };
     saveConsent(newConsent);
     setConsent(newConsent);
     setHasResponded(true);
-  }, []);
+  }, [consentVersion]);
 
   const declineAnalytics = useCallback(() => {
-    const newConsent = createDeclineAnalyticsConsent();
+    const newConsent = {
+      ...createDeclineAnalyticsConsent(),
+      version: consentVersion,
+    };
     saveConsent(newConsent);
     setConsent(newConsent);
     setHasResponded(true);
-  }, []);
+  }, [consentVersion]);
 
   const updateConsentHandler = useCallback(
     (category: ConsentCategory, value: boolean) => {

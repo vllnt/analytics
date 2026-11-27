@@ -205,11 +205,13 @@ AnalyticsProvider mounts
   │    ├─ DNT enabled? ──▶ Block tracking
   │    └─ Otherwise ──▶ Start & flush queue
   │
-  └─ Declined or no consent ──▶ No init; track() calls stay queued in memory
-                                 (declineAnalytics() blocks and empties the queue)
+  ├─ Analytics declined ──▶ disableAnalytics(); track() calls are dropped
+  │
+  └─ No consent yet ──▶ No init; track() calls are queued in memory
 ```
 
-Events fired before initialization are queued and flushed once consent is granted and analytics initializes.
+Events fired before the user responds are queued and flushed once consent is granted and
+analytics initializes. A decline, or an init blocked by Do Not Track, drops them.
 
 ## Scripts
 

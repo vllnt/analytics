@@ -334,6 +334,66 @@ describe("analytics", () => {
     });
   });
 
+  describe("blocked initAnalytics", () => {
+    const stored = (analytics: boolean): void => {
+      const consent: ConsentState = {
+        analytics,
+        functional: true,
+        timestamp: "2025-01-01T00:00:00.000Z",
+        version: 1,
+      };
+      localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(consent));
+    };
+    const setDoNotTrack = (value: null | string): void => {
+      Object.defineProperty(navigator, "doNotTrack", {
+        configurable: true,
+        value,
+        writable: true,
+      });
+    };
+
+    it("drops events queued before an init blocked by declined consent", () => {
+      stored(false);
+      track("before_decision");
+      trackPage({ path: "/before" });
+      initAnalytics(baseConfig);
+
+      stored(true);
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      enableAnalytics({ ...baseConfig, debug: true });
+
+      expect(isAnalyticsEnabled()).toBe(true);
+      expect(logSpy).toHaveBeenCalledWith("[analytics:init]", {
+        app: "test-app",
+        version: 1,
+      });
+      expect(logSpy).not.toHaveBeenCalledWith(
+        "[analytics:track]",
+        expect.anything(),
+      );
+      expect(logSpy).not.toHaveBeenCalledWith(
+        "[analytics:page]",
+        expect.anything(),
+      );
+    });
+
+    it("drops events queued before an init blocked by Do Not Track", () => {
+      setDoNotTrack("1");
+      track("before_decision");
+      initAnalytics(baseConfig);
+
+      setDoNotTrack(null);
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      enableAnalytics({ ...baseConfig, debug: true });
+
+      expect(isAnalyticsEnabled()).toBe(true);
+      expect(logSpy).not.toHaveBeenCalledWith(
+        "[analytics:track]",
+        expect.anything(),
+      );
+    });
+  });
+
   describe("enableAnalytics / disableAnalytics", () => {
     it("enableAnalytics initializes when previously blocked", () => {
       const declinedConsent: ConsentState = {
