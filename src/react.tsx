@@ -79,7 +79,7 @@ export function AnalyticsProvider({
   }, [consent, config]);
 
   const acceptAll = useCallback(() => {
-    const newConsent = createAcceptAllConsent(consentVersion);
+    const newConsent = { ...createAcceptAllConsent(), version: consentVersion };
     saveConsent(newConsent);
     setConsent(newConsent);
     setHasResponded(true);
@@ -87,7 +87,10 @@ export function AnalyticsProvider({
   }, [config, consentVersion]);
 
   const declineAnalytics = useCallback(() => {
-    const newConsent = createDeclineAnalyticsConsent(consentVersion);
+    const newConsent = {
+      ...createDeclineAnalyticsConsent(),
+      version: consentVersion,
+    };
     saveConsent(newConsent);
     setConsent(newConsent);
     setHasResponded(true);
@@ -180,14 +183,17 @@ export function useConsent(options: UseConsentOptions = {}): UseConsentReturn {
   const [hasResponded, setHasResponded] = useState(() => consent !== null);
 
   const acceptAll = useCallback(() => {
-    const newConsent = createAcceptAllConsent(consentVersion);
+    const newConsent = { ...createAcceptAllConsent(), version: consentVersion };
     saveConsent(newConsent);
     setConsent(newConsent);
     setHasResponded(true);
   }, [consentVersion]);
 
   const declineAnalytics = useCallback(() => {
-    const newConsent = createDeclineAnalyticsConsent(consentVersion);
+    const newConsent = {
+      ...createDeclineAnalyticsConsent(),
+      version: consentVersion,
+    };
     saveConsent(newConsent);
     setConsent(newConsent);
     setHasResponded(true);
