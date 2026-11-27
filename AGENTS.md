@@ -31,6 +31,9 @@ Run all four checks before opening a PR; CI runs the same ones.
 - `src/consent.ts`: consent storage and cookie (`vllnt-consent`), DNT check, validators.
 - `src/types.ts`: public types.
 - `src/__tests__/`: Vitest tests (jsdom).
+- `src/__tests__/documentation.test.ts`: the docs contract. README section order, install and quick start
+  in the first 40 lines, tagged and type-checked examples, every export and error documented,
+  links, footer and `llms.txt` ecosystem block. Update the docs with any API change.
 - `tsup.config.ts`: build config. Shared chunks keep the singleton shared across both entries.
 - `.github/workflows/`: `ci.yml`, `publish.yml` (release-critical), `leak-gate.yml`.
 

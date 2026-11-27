@@ -1,7 +1,6 @@
 // @vitest-environment node
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { dirname, join, posix, resolve } from "node:path";
+import { resolve } from "node:path";
 
 import { beforeAll, describe, expect, it } from "vitest";
 
@@ -67,18 +66,6 @@ function packedFiles(): string[] {
   });
 }
 
-function relativeLinks(file: string): string[] {
-  const text = readFileSync(join(root, file), "utf8");
-  const links: string[] = [];
-  for (const match of text.matchAll(/\]\(([^)\s#]*)[^)\s]*\)/g)) {
-    const target = match[1];
-    if (target && !/^[a-z]+:/i.test(target)) {
-      links.push(posix.normalize(posix.join(dirname(file), target)));
-    }
-  }
-  return links;
-}
-
 describe("published package contents", () => {
   let files: string[] = [];
 
@@ -95,14 +82,4 @@ describe("published package contents", () => {
       files.filter((path) => forbidden.some((pattern) => pattern.test(path))),
     ).toEqual([]);
   });
-
-  it.each(["llms.txt", "README.md", "docs/API.md"])(
-    "relative links in %s resolve inside the package",
-    (file) => {
-      const missing = relativeLinks(file).filter(
-        (target) => !files.includes(target),
-      );
-      expect(missing).toEqual([]);
-    },
-  );
 });
