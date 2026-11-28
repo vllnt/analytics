@@ -278,7 +278,7 @@ The analytics state is a module-level singleton with no public reset. In your te
 
 This repository's own checks: `pnpm lint`, `pnpm typecheck`, `pnpm test:coverage` (Vitest with
 jsdom, 100% coverage gate), `pnpm build` and `pnpm test:package` (installs the packed tarball in a
-clean project and imports and type-checks every entry point).
+clean project with the repo's release-age rule, and imports and type-checks every entry point).
 
 ## Security
 
