@@ -8,7 +8,9 @@
 #
 # Stages:
 #   1. pnpm pack into a temp dir outside the repo
-#   2. pnpm add the tarball, react, react-dom, @types/react and typescript
+#   2. pnpm add the tarball, react, react-dom, @types/react and typescript,
+#      with the repo's release-age rule (minimumReleaseAge and
+#      minimumReleaseAgeExclude from pnpm-workspace.yaml)
 #   3. import every "exports" entry of the tarball's package.json (ESM)
 #   4. require every "exports" entry (CJS)
 #   5-7. tsc on a strict consumer: NodeNext ESM, NodeNext CJS (.d.cts),
@@ -69,13 +71,28 @@ echo "OK    pack: $(tar -tzf "$tarball" | wc -l | tr -d ' ') file(s)"
 app="$tmp/app"
 mkdir -p "$app"
 printf '{ "name": "package-consumer", "private": true, "type": "module" }\n' > "$app/package.json"
+# Apply the repo's release-age rule to this install: copy only the
+# minimumReleaseAge and minimumReleaseAgeExclude keys from pnpm-workspace.yaml.
+awk '/^[^[:space:]#]/ { keep = ($1 == "minimumReleaseAge:" || $1 == "minimumReleaseAgeExclude:") } keep' \
+  "$ROOT/pnpm-workspace.yaml" > "$app/pnpm-workspace.yaml"
+grep -q '^minimumReleaseAge: [0-9][0-9]*$' "$app/pnpm-workspace.yaml" \
+  && grep -q '^minimumReleaseAgeExclude:' "$app/pnpm-workspace.yaml" \
+  || fail "release-age keys missing from pnpm-workspace.yaml"
+# PACKAGE_TEST_MIN_RELEASE_AGE (minutes) overrides the age, to prove the rule applies.
+if [[ -n "${PACKAGE_TEST_MIN_RELEASE_AGE:-}" ]]; then
+  [[ "$PACKAGE_TEST_MIN_RELEASE_AGE" =~ ^[0-9]+$ ]] || fail "PACKAGE_TEST_MIN_RELEASE_AGE must be a number of minutes"
+  sed "s/^minimumReleaseAge: .*/minimumReleaseAge: $PACKAGE_TEST_MIN_RELEASE_AGE/" \
+    "$app/pnpm-workspace.yaml" > "$tmp/workspace.yaml"
+  mv "$tmp/workspace.yaml" "$app/pnpm-workspace.yaml"
+fi
+MIN_RELEASE_AGE="$(sed -n 's/^minimumReleaseAge: //p' "$app/pnpm-workspace.yaml")"
 (
   cd "$app"
   quiet pnpm add "$tarball" \
     "react@$REACT_VERSION" "react-dom@$REACT_VERSION" \
     "@types/react@$TYPES_REACT_VERSION" "typescript@$TS_VERSION"
 ) || fail "pnpm add tarball into a clean project"
-echo "OK    install: $PKG_NAME with react $REACT_VERSION, typescript $TS_VERSION"
+echo "OK    install: $PKG_NAME with react $REACT_VERSION, typescript $TS_VERSION (minimumReleaseAge $MIN_RELEASE_AGE)"
 
 # Entry points come from the tarball's own package.json, so a file the
 # exports map points at but the tarball lacks fails here.

@@ -22,7 +22,8 @@ pnpm build           # tsup -> dist (ESM, CJS, .d.ts)
 pnpm test:package    # pack, install in a clean project, import + type-check every entry (needs dist)
 ```
 
-Run all five checks before opening a PR; CI runs the same ones (the package test runs in `publish.yml`).
+Run all five checks before opening a PR; CI runs the same ones (the package test runs in CI's Build job
+and in `publish.yml`). The package test's install applies the repo's release-age rule from `pnpm-workspace.yaml`.
 
 ## Layout
 
