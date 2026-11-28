@@ -10,6 +10,7 @@ pnpm lint
 pnpm typecheck
 pnpm test:coverage
 pnpm build
+pnpm test:package
 ```
 
 ## Testing
@@ -30,7 +31,7 @@ at least one adversarial test (invalid input, SSR, storage unavailable).
 - Target `main`
 - One logical change per PR
 - Include tests for new behavior or bug fixes
-- Ensure all checks pass: `pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build`
+- Ensure all checks pass: `pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build && pnpm test:package`
 
 ## Releases
 

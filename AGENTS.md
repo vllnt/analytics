@@ -19,9 +19,10 @@ pnpm lint
 pnpm typecheck
 pnpm test:coverage   # 100% coverage gate (vitest.config.ts)
 pnpm build           # tsup -> dist (ESM, CJS, .d.ts)
+pnpm test:package    # pack, install in a clean project, import + type-check every entry (needs dist)
 ```
 
-Run all four checks before opening a PR; CI runs the same ones.
+Run all five checks before opening a PR; CI runs the same ones (the package test runs in `publish.yml`).
 
 ## Layout
 

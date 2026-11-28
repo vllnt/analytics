@@ -277,7 +277,8 @@ The analytics state is a module-level singleton with no public reset. In your te
 `localStorage` between cases and load the module fresh when a case needs a new instance.
 
 This repository's own checks: `pnpm lint`, `pnpm typecheck`, `pnpm test:coverage` (Vitest with
-jsdom, 100% coverage gate) and `pnpm build`.
+jsdom, 100% coverage gate), `pnpm build` and `pnpm test:package` (installs the packed tarball in a
+clean project and imports and type-checks every entry point).
 
 ## Security
 
@@ -292,7 +293,7 @@ None: no other @vllnt package is used together with this one in code.
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/vllnt/analytics/blob/main/CONTRIBUTING.md). Setup:
-`pnpm install`, then `pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build`.
+`pnpm install`, then `pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build && pnpm test:package`.
 
 ## Links
 
